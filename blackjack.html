@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a5334">
+    <title>Casino Blackjack 21</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Safe area para notch de iPhone */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            background: linear-gradient(180deg, #0a3d0a 0%, #1a5a1a 50%, #0a3d0a 100%);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Animação de luzes neon */
+        @keyframes neon-glow {
+            0%, 100% { 
+                text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 30px #ff6b00;
+                opacity: 1;
+            }
+            50% { 
+                text-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700, 0 0 15px #ff6b00;
+                opacity: 0.8;
+            }
+        }
+        
+        /* Animação de ficha caindo */
+        @keyframes chip-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+        }
+        
+        /* Animação de carta sendo distribuída */
+        @keyframes card-deal {
+            0% { transform: translateX(-200px) rotate(-45deg); opacity: 0; }
+            100% { transform: translateX(0) rotate(0deg); opacity: 1; }
+        }
+        
+        /* Animação de vitória */
+        @keyframes winner-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 
+                            0 0 40px rgba(255, 215, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 
+                            0 0 80px rgba(255, 215, 0, 0.6);
+            }
+        }
+        
+        .neon-text {
+            animation: neon-glow 2s ease-in-out infinite;
+        }
+        
+        .chip-animation {
+            animation: chip-fall 2s ease-in-out forwards;
+        }
+        
+        .card-deal-animation {
+            animation: card-deal 0.5s ease-out forwards;
+        }
+        
+        .winner-glow {
+            animation: winner-pulse 1.5s ease-in-out infinite;
+        }
+        
+        /* Mesa de feltro realista */
+        .felt-table {
+            background: radial-gradient(ellipse at center, #1a5a1a 0%, #0d3d0d 100%);
+            box-shadow: 
+                inset 0 0 100px rgba(0,0,0,0.5),
+                0 0 50px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        
+        /* Moldura dourada luxuosa */
+        .gold-frame {
+            background: linear-gradient(135deg, 
+                #d4af37 0%, 
+                #f4e5a0 25%, 
+                #d4af37 50%, 
+                #c5a028 75%, 
+                #d4af37 100%);
+            border: 4px solid #8B6914;
+            box-shadow: 
+                0 0 40px rgba(212, 175, 55, 0.5),
+                inset 0 0 20px rgba(255,255,255,0.3),
+                inset 0 0 40px rgba(0,0,0,0.2);
+        }
+        
+        /* Display LED estilo Vegas */
+        .led-display {
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+            border: 3px solid #333;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 255, 0, 0.3),
+                0 0 20px rgba(0, 0, 0, 0.5);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        
+        /* Estilo para as cartas - mais realistas */
+        .card {
+            width: 60px;
+            height: 90px;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 2px solid #ddd;
+            box-shadow: 
+                3px 3px 8px rgba(0,0,0,0.4),
+                inset 0 0 5px rgba(255,255,255,0.8);
+            display: inline-flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 6px;
+            margin: 3px;
+            font-family: 'Georgia', serif;
+            font-size: 1.125rem;
+            font-weight: bold;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px) rotateX(10deg);
+        }
+        
+        @media (min-width: 640px) {
+            .card {
+                width: 85px;
+                height: 125px;
+                border-radius: 10px;
+                padding: 8px;
+                margin: 5px;
+                font-size: 1.75rem;
+            }
+        }
+        
+        .card.red {
+            color: #D90000;
+        }
+        .card.black {
+            color: #1a1a1a;
+        }
+        .card span:last-child {
+            transform: rotate(180deg);
+        }
+        
+        /* Carta virada - design profissional */
+        .card.hidden {
+            background: linear-gradient(135deg, #003d7a 0%, #0052a3 50%, #003d7a 100%);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #002a5c 25%, transparent 25%), 
+                linear-gradient(225deg, #002a5c 25%, transparent 25%),
+                linear-gradient(45deg, #002a5c 25%, transparent 25%),
+                linear-gradient(315deg, #002a5c 25%, #003d7a 25%);
+            background-size: 100% 100%, 15px 15px, 15px 15px, 15px 15px, 15px 15px;
+            background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+            color: transparent;
+            border: 2px solid #001f3f;
+            box-shadow: 
+                3px 3px 8px rgba(0,0,0,0.6),
+                inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .card.hidden span {
+            display: none;
+        }
+        
+        /* Botões estilo Vegas com efeito 3D */
+        .vegas-btn {
+            background: linear-gradient(180deg, #ffd700 0%, #ffed4e 50%, #b8860b 100%);
+            border: 3px solid #8B6914;
+            box-shadow: 
+                0 8px 0 #6B5010,
+                0 12px 25px rgba(0,0,0,0.5),
+                inset 0 2px 8px rgba(255,255,255,0.5);
+            transform: translateY(0);
+            transition: all 0.1s ease;
+            color: #000;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+        
+        .vegas-btn:active {
+            transform: translateY(6px);
+            box-shadow: 
+                0 2px 0 #6B5010,
+                0 4px 10px rgba(0,0,0,0.5),
+                inset 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .vegas-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Botões de ação coloridos */
+        .action-blue {
+            background: linear-gradient(180deg, #4a90e2 0%, #357abd 50%, #2a5f8f 100%);
+            border: 3px solid #1a4d7a;
+            box-shadow: 
+                0 8px 0 #153d5f,
+                0 12px 25px rgba(0,0,0,0.5),
+                inset 0 2px 8px rgba(255,255,255,0.3);
+        }
+        
+        .action-blue:active {
+            box-shadow: 
+                0 2px 0 #153d5f,
+                0 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        .action-red {
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 50%, #a02820 100%);
+            border: 3px solid #7a1f18;
+            box-shadow: 
+                0 8px 0 #5f1812,
+                0 12px 25px rgba(0,0,0,0.5),
+                inset 0 2px 8px rgba(255,255,255,0.3);
+        }
+        
+        .action-red:active {
+            box-shadow: 
+                0 2px 0 #5f1812,
+                0 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        .action-gray {
+            background: linear-gradient(180deg, #7f8c8d 0%, #5f6a6b 50%, #4a5557 100%);
+            border: 3px solid #34495e;
+            box-shadow: 
+                0 8px 0 #2c3e50,
+                0 12px 25px rgba(0,0,0,0.5),
+                inset 0 2px 8px rgba(255,255,255,0.3);
+        }
+        
+        .action-gray:active {
+            box-shadow: 
+                0 2px 0 #2c3e50,
+                0 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        /* Ficha de aposta realista */
+        .bet-chip {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 
+                0 4px 8px rgba(0,0,0,0.4),
+                inset 0 2px 5px rgba(255,255,255,0.5),
+                inset 0 -2px 5px rgba(0,0,0,0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .bet-chip:hover {
+            transform: scale(1.1) translateY(-3px);
+            box-shadow: 
+                0 8px 16px rgba(0,0,0,0.5),
+                inset 0 2px 5px rgba(255,255,255,0.5);
+        }
+        
+        .bet-chip.selected {
+            border-color: #ffd700;
+            box-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 4px 8px rgba(0,0,0,0.4),
+                inset 0 2px 5px rgba(255,255,255,0.5);
+        }
+        
+        @media (min-width: 640px) {
+            .bet-chip {
+                width: 75px;
+                height: 75px;
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* Suporte para a fonte Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        /* Previne zoom em iOS */
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+        
+        /* Botões responsivos */
+        .bet-btn, .action-btn {
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        @media (max-width: 639px) {
+            .bet-btn, .action-btn {
+                padding: 0.625rem 1rem !important;
+                font-size: 0.875rem !important;
+            }
+        }
+        
+        /* Área de cartas com sombra */
+        .card-area {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-6">
+
+    <!-- Container de fichas caindo (para vitórias) -->
+    <div id="chip-container" class="absolute inset-0 pointer-events-none z-50"></div>
+
+    <!-- Moldura dourada externa -->
+    <div class="gold-frame rounded-3xl p-2 sm:p-3 shadow-2xl w-full max-w-4xl mx-auto">
+        
+        <!-- Mesa de feltro verde -->
+        <div class="felt-table p-4 sm:p-6 rounded-2xl">
+        
+        <!-- Luzes decorativas no topo -->
+        <div class="flex justify-around mb-4">
+            <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-500 neon-text"></div>
+            <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-yellow-400 neon-text" style="animation-delay: 0.3s;"></div>
+            <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500 neon-text" style="animation-delay: 0.6s;"></div>
+            <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-500 neon-text" style="animation-delay: 0.9s;"></div>
+        </div>
+        
+        <h1 class="text-3xl sm:text-5xl font-black text-center mb-4 sm:mb-6 text-yellow-300 neon-text tracking-wider" style="text-shadow: 3px 3px 6px #000, 0 0 20px #ffd700;">
+            ♠️ BLACKJACK 21 ♥️
+        </h1>
+        
+        <!-- Saldo e Aposta LED Display -->
+        <div class="gold-frame rounded-xl sm:rounded-2xl p-1 sm:p-2 mb-4 sm:mb-6 shadow-2xl">
+            <div class="led-display rounded-lg sm:rounded-xl p-3 sm:p-4">
+                <div class="flex flex-col sm:flex-row justify-around items-center gap-3 sm:gap-4">
+                    <div class="text-center">
+                        <div class="text-xs sm:text-sm text-yellow-500 font-bold tracking-wider mb-1 neon-text">💰 SALDO</div>
+                        <div id="player-balance" class="text-2xl sm:text-4xl font-bold text-green-400 neon-text" style="text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;">$1000</div>
+                    </div>
+                    <div class="hidden sm:block w-px h-12 bg-yellow-600/50"></div>
+                    <div class="text-center">
+                        <div class="text-xs sm:text-sm text-yellow-500 font-bold tracking-wider mb-1 neon-text">🎰 APOSTA</div>
+                        <div id="current-bet-display" class="text-2xl sm:text-4xl font-bold text-yellow-300 neon-text" style="text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;">$0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensagem de Status LED -->
+        <div class="led-display rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 border-2 border-yellow-600/50 shadow-xl">
+            <p id="message-box" class="text-center text-base sm:text-xl font-bold text-yellow-300 tracking-wide neon-text" style="text-shadow: 0 0 10px #ffd700;">
+                FAÇA SUA APOSTA PARA COMEÇAR
+            </p>
+        </div>
+
+        <!-- Área de Jogo -->
+        <div class="space-y-4 sm:space-y-6">
+            <!-- Mão do Croupier -->
+            <div class="gold-frame rounded-xl sm:rounded-2xl p-1 shadow-2xl">
+                <div class="bg-black/40 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-lg sm:text-2xl font-bold text-white">👔 CROUPIER</h2>
+                        <div class="led-display px-3 py-1 rounded-lg">
+                            <span class="text-sm sm:text-lg font-bold text-red-400" style="text-shadow: 0 0 10px #ff0000;">
+                                <span id="dealer-score">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div id="dealer-hand" class="card-area min-h-[110px] sm:min-h-[140px] p-3 rounded-lg flex flex-wrap items-center justify-center">
+                        <!-- Cartas do Croupier aqui -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mão do Jogador -->
+            <div class="gold-frame rounded-xl sm:rounded-2xl p-1 shadow-2xl">
+                <div class="bg-black/40 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-lg sm:text-2xl font-bold text-white">🎰 VOCÊ</h2>
+                        <div class="led-display px-3 py-1 rounded-lg">
+                            <span class="text-sm sm:text-lg font-bold text-green-400" style="text-shadow: 0 0 10px #00ff00;">
+                                <span id="player-score">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div id="player-hand" class="card-area min-h-[110px] sm:min-h-[140px] p-3 rounded-lg flex flex-wrap items-center justify-center">
+                        <!-- Cartas do Jogador aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Aposta -->
+        <div id="betting-controls" class="mt-6 sm:mt-8">
+            <div class="text-center mb-4">
+                <span class="text-base sm:text-xl font-bold text-yellow-300 neon-text tracking-wider">💵 SELECIONE SUA FICHA 💵</span>
+            </div>
+            <div class="flex flex-wrap gap-3 sm:gap-4 justify-center mb-6">
+                <!-- Ficha $10 -->
+                <div class="bet-chip" data-amount="10" style="background: radial-gradient(circle at 30% 30%, #ff6b6b, #cc0000, #990000);">
+                    <span class="text-white" style="text-shadow: 1px 1px 2px #000;">$10</span>
+                </div>
+                <!-- Ficha $50 -->
+                <div class="bet-chip" data-amount="50" style="background: radial-gradient(circle at 30% 30%, #5d9cec, #4a89dc, #3b6ba8);">
+                    <span class="text-white" style="text-shadow: 1px 1px 2px #000;">$50</span>
+                </div>
+                <!-- Ficha $100 -->
+                <div class="bet-chip" data-amount="100" style="background: radial-gradient(circle at 30% 30%, #a0d468, #8cc152, #6fa832);">
+                    <span class="text-white" style="text-shadow: 1px 1px 2px #000;">$100</span>
+                </div>
+            </div>
+            <button id="deal-button" class="vegas-btn w-full sm:w-auto text-lg sm:text-2xl font-black py-3 sm:py-4 px-8 sm:px-12 rounded-xl shadow-2xl transition duration-200 transform hover:scale-105 tracking-wider">
+                🃏 DISTRIBUIR CARTAS 🃏
+            </button>
+        </div>
+
+        <!-- Controles do Jogo -->
+        <div id="game-controls" class="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 hidden">
+            <button id="hit-button" class="action-blue action-btn text-white text-lg sm:text-xl font-black py-3 sm:py-4 px-8 sm:px-10 rounded-xl shadow-2xl transition duration-200 transform hover:scale-105 tracking-wide">
+                🎴 PEDIR CARTA
+            </button>
+            <button id="stand-button" class="action-red action-btn text-white text-lg sm:text-xl font-black py-3 sm:py-4 px-8 sm:px-10 rounded-xl shadow-2xl transition duration-200 transform hover:scale-105 tracking-wide">
+                🛑 PARAR
+            </button>
+        </div>
+        
+        <!-- Botão de Nova Mão -->
+        <div id="new-hand-controls" class="mt-6 sm:mt-8 text-center hidden">
+            <button id="new-hand-button" class="action-gray action-btn text-white text-lg sm:text-xl font-black py-3 sm:py-4 px-8 sm:px-10 rounded-xl shadow-2xl transition duration-200 transform hover:scale-105 tracking-wide">
+                🔄 JOGAR NOVA MÃO
+            </button>
+        </div>
+
+        </div><!-- Fecha felt-table -->
+    </div><!-- Fecha gold-frame -->
+
+    <script>
+        // Elementos do DOM
+        const playerBalanceEl = document.getElementById('player-balance');
+        const currentBetDisplayEl = document.getElementById('current-bet-display');
+        const messageBoxEl = document.getElementById('message-box');
+        const dealerScoreEl = document.getElementById('dealer-score');
+        const dealerHandEl = document.getElementById('dealer-hand');
+        const playerScoreEl = document.getElementById('player-score');
+        const playerHandEl = document.getElementById('player-hand');
+        const bettingControlsEl = document.getElementById('betting-controls');
+        const betChips = document.querySelectorAll('.bet-chip'); // Alterado de bet-btn
+        const dealButton = document.getElementById('deal-button');
+        const gameControlsEl = document.getElementById('game-controls');
+        const hitButton = document.getElementById('hit-button');
+        const standButton = document.getElementById('stand-button');
+        const newHandControlsEl = document.getElementById('new-hand-controls');
+        const newHandButton = document.getElementById('new-hand-button');
+        const chipContainer = document.getElementById('chip-container');
+
+        // Estado do Jogo
+        let balance = 1000;
+        let currentBet = 0;
+        let selectedBetAmount = 10;
+        let deck = [];
+        let playerHand = [];
+        let dealerHand = [];
+        let playerScore = 0;
+        let dealerScore = 0;
+        let gameInProgress = false;
+        let dealerHiddenCard = null;
+
+        const naipes = ['Copas', 'Ouros', 'Paus', 'Espadas'];
+        const valores = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const simbolosNaipes = { 'Copas': '♥', 'Ouros': '♦', 'Paus': '♣', 'Espadas': '♠' };
+        
+        // --- FUNÇÕES DE EFEITOS VISUAIS ---
+        const createChipRain = () => {
+            const numberOfChips = 20;
+            for(let i = 0; i < numberOfChips; i++) {
+                setTimeout(() => {
+                    const chip = document.createElement('div');
+                    chip.textContent = '🎰';
+                    chip.className = 'chip-animation absolute text-4xl';
+                    chip.style.left = `${Math.random() * 100}%`;
+                    chip.style.animationDelay = `${Math.random() * 0.5}s`;
+                    chipContainer.appendChild(chip);
+                    
+                    setTimeout(() => chip.remove(), 2000);
+                }, i * 50);
+            }
+        };
+        
+        const addWinnerGlow = (handElement) => {
+            handElement.classList.add('winner-glow');
+            setTimeout(() => {
+                handElement.classList.remove('winner-glow');
+            }, 3000);
+        };
+        
+        // --- Funções do Baralho ---
+
+        function criarBaralho() {
+            deck = [];
+            for (let naipe of naipes) {
+                for (let valor of valores) {
+                    deck.push({ valor, naipe });
+                }
+            }
+        }
+
+        function embaralharBaralho() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function comprarCarta() {
+            return deck.pop();
+        }
+
+        // --- Lógica do Jogo ---
+
+        function iniciarJogo() {
+            const bet = selectedBetAmount;
+
+            if (isNaN(bet) || bet <= 0) {
+                mostrarMensagem("POR FAVOR, SELECIONE UMA APOSTA VÁLIDA!", "red");
+                return;
+            }
+            if (bet > balance) {
+                mostrarMensagem("APOSTA EXCEDE O SEU SALDO!", "red");
+                return;
+            }
+
+            // Configurar estado do jogo
+            balance -= bet;
+            currentBet = bet;
+            gameInProgress = true;
+            playerHand = [];
+            dealerHand = [];
+            playerScore = 0;
+            dealerScore = 0;
+            dealerHiddenCard = null;
+            
+            atualizarSaldoEAposta();
+            limparMesa();
+            mostrarMensagem("🎰 BOA SORTE! 🎰");
+
+            criarBaralho();
+            embaralharBaralho();
+
+            // Distribuir cartas
+            setTimeout(() => darCarta(playerHandEl, playerHand), 500);
+            setTimeout(() => darCarta(dealerHandEl, dealerHand), 1000);
+            setTimeout(() => darCarta(playerHandEl, playerHand), 1500);
+            setTimeout(() => {
+                dealerHiddenCard = comprarCarta();
+                dealerHand.push(dealerHiddenCard);
+                renderizarCarta(dealerHandEl, null, true); // Adiciona carta virada
+            }, 2000);
+            
+            // Atualizar UI
+            bettingControlsEl.classList.add('hidden');
+            gameControlsEl.classList.remove('hidden');
+            newHandControlsEl.classList.add('hidden');
+
+            // Verificar Blackjack inicial após as cartas serem dadas
+            setTimeout(verificarBlackjackInicial, 2500);
+        }
+
+        function darCarta(handElement, handArray, isHidden = false) {
+            const carta = comprarCarta();
+            handArray.push(carta);
+            renderizarCarta(handElement, carta, isHidden);
+            
+            if (handArray === playerHand) {
+                playerScore = calcularPontuacao(playerHand);
+                playerScoreEl.textContent = playerScore;
+                if (playerScore > 21) {
+                    terminarJogo(false, "💥 VOCÊ ESTOUROU! PERDEU! 💥");
+                }
+            } else {
+                // Só atualiza a pontuação do croupier pela carta visível
+                dealerScore = calcularPontuacao(dealerHand.filter(c => c !== dealerHiddenCard));
+                dealerScoreEl.textContent = dealerScore;
+            }
+        }
+        
+        function calcularPontuacao(hand) {
+            let pontuacao = 0;
+            let ases = 0;
+            for (let carta of hand) {
+                if (!carta) continue; // Ignora a carta oculta se for null
+                if (carta.valor === 'A') {
+                    ases++;
+                    pontuacao += 11;
+                } else if (['K', 'Q', 'J'].includes(carta.valor)) {
+                    pontuacao += 10;
+                } else {
+                    pontuacao += parseInt(carta.valor);
+                }
+            }
+            // Ajustar valor do Ás
+            while (pontuacao > 21 && ases > 0) {
+                pontuacao -= 10;
+                ases--;
+            }
+            return pontuacao;
+        }
+
+        function turnoDoCroupier() {
+            gameControlsEl.classList.add('hidden');
+            mostrarMensagem("⏳ TURNO DO CROUPIER... ⏳");
+
+            // Revelar carta oculta
+            const hiddenCardEl = dealerHandEl.querySelector('.hidden');
+            if (hiddenCardEl) {
+                renderizarCarta(hiddenCardEl, dealerHiddenCard, false, true); // Substitui a carta oculta
+            }
+            
+            dealerScore = calcularPontuacao(dealerHand);
+            dealerScoreEl.textContent = dealerScore;
+
+            // Croupier compra até 17 ou mais
+            function hitDealer() {
+                if (dealerScore < 17) {
+                    darCarta(dealerHandEl, dealerHand);
+                    dealerScore = calcularPontuacao(dealerHand);
+                    dealerScoreEl.textContent = dealerScore;
+                    
+                    if (dealerScore > 21) {
+                        terminarJogo(true, "💥 CROUPIER ESTOUROU! VOCÊ GANHOU! 🎉");
+                    } else {
+                        setTimeout(hitDealer, 1000); // Continua comprando
+                    }
+                } else {
+                    // Croupier para
+                    determinarVencedor();
+                }
+            }
+            
+            setTimeout(hitDealer, 1000);
+        }
+
+        function verificarBlackjackInicial() {
+            playerScore = calcularPontuacao(playerHand);
+            playerScoreEl.textContent = playerScore;
+            // A pontuação do croupier para esta verificação deve incluir a carta oculta
+            const dealerTotalScore = calcularPontuacao(dealerHand);
+
+            if (playerScore === 21) {
+                if (dealerTotalScore === 21) {
+                    terminarJogo(false, "🤝 EMPATE! AMBOS TÊM BLACKJACK! 🤝", true);
+                } else {
+                    terminarJogo(true, "🎰 BLACKJACK! VOCÊ GANHOU! 🎰", false, true);
+                }
+            } else if (dealerTotalScore === 21) {
+                terminarJogo(false, "😞 CROUPIER TEM BLACKJACK! VOCÊ PERDEU! 😞");
+            }
+            // Se ninguém tiver Blackjack, o jogo continua
+        }
+
+        function determinarVencedor() {
+            if (playerScore > dealerScore) {
+                terminarJogo(true, "🎉 VOCÊ GANHOU! PARABÉNS! 🎉");
+            } else if (dealerScore > playerScore) {
+                terminarJogo(false, "😞 CROUPIER GANHOU! TENTE NOVAMENTE! 😞");
+            } else {
+                terminarJogo(false, "🤝 EMPATE! APOSTA DEVOLVIDA! 🤝", true);
+            }
+        }
+
+        function terminarJogo(jogadorGanhou, mensagem, isPush = false, isBlackjack = false) {
+            gameInProgress = false;
+            
+            // Revelar carta oculta se o jogo terminou antes do turno do croupier (ex: bust do jogador)
+            const hiddenCardEl = dealerHandEl.querySelector('.hidden');
+            if (hiddenCardEl) {
+                renderizarCarta(hiddenCardEl, dealerHiddenCard, false, true);
+                dealerScore = calcularPontuacao(dealerHand);
+                dealerScoreEl.textContent = dealerScore;
+            }
+
+            if (isPush) {
+                balance += currentBet; // Devolve a aposta
+                mostrarMensagem(mensagem, "blue");
+            } else if (jogadorGanhou) {
+                if (isBlackjack) {
+                    balance += currentBet * 2.5; // Pagamento 3:2
+                    createChipRain(); // Chuva de fichas para Blackjack!
+                    addWinnerGlow(playerHandEl);
+                } else {
+                    balance += currentBet * 2; // Pagamento 1:1
+                    addWinnerGlow(playerHandEl);
+                }
+                mostrarMensagem(mensagem, "green");
+            } else {
+                // Perdeu, o saldo já foi debitado
+                mostrarMensagem(mensagem, "red");
+            }
+            
+            currentBet = 0;
+            atualizarSaldoEAposta();
+
+            gameControlsEl.classList.add('hidden');
+            newHandControlsEl.classList.remove('hidden');
+        }
+
+        // --- Funções de UI ---
+
+        function renderizarCarta(handElement, carta, isHidden = false, replace = false) {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card');
+            
+            // Adiciona animação de distribuição
+            if (!replace) {
+                cardEl.classList.add('card-deal-animation');
+            }
+
+            if (isHidden) {
+                cardEl.classList.add('hidden');
+            } else {
+                const cor = (carta.naipe === 'Copas' || carta.naipe === 'Ouros') ? 'red' : 'black';
+                const simbolo = simbolosNaipes[carta.naipe];
+                cardEl.classList.add(cor);
+                cardEl.innerHTML = `
+                    <span>${carta.valor}${simbolo}</span>
+                    <span>${carta.valor}${simbolo}</span>
+                `;
+            }
+
+            if (replace) {
+                handElement.replaceWith(cardEl);
+            } else {
+                handElement.appendChild(cardEl);
+            }
+        }
+
+        function limparMesa() {
+            playerHandEl.innerHTML = '';
+            dealerHandEl.innerHTML = '';
+            playerScoreEl.textContent = '0';
+            dealerScoreEl.textContent = '0';
+        }
+
+        function atualizarSaldoEAposta() {
+            playerBalanceEl.textContent = `$${balance}`;
+            currentBetDisplayEl.textContent = `$${currentBet}`;
+            
+            let canPlay = false;
+            // Desabilitar fichas de aposta se o saldo for insuficiente
+            betChips.forEach(chip => {
+                const amount = parseInt(chip.dataset.amount);
+                if (amount > balance) {
+                    chip.style.opacity = '0.3';
+                    chip.style.cursor = 'not-allowed';
+                    chip.style.pointerEvents = 'none';
+                } else {
+                    chip.style.opacity = '1';
+                    chip.style.cursor = 'pointer';
+                    chip.style.pointerEvents = 'auto';
+                    canPlay = true;
+                }
+            });
+
+            dealButton.disabled = !canPlay;
+            if (!canPlay) {
+                dealButton.style.opacity = '0.5';
+            } else {
+                dealButton.style.opacity = '1';
+            }
+
+            if (balance === 0 || !canPlay) {
+                const msg = !canPlay && balance > 0 ? "⚠️ SALDO INSUFICIENTE PARA A APOSTA MÍNIMA! ⚠️" : "🎰 FIM DE JOGO! RECARREGUE A PÁGINA PARA JOGAR NOVAMENTE! 🎰";
+                mostrarMensagem(msg, "red");
+            }
+        }
+
+        function mostrarMensagem(texto, tipo = "default") {
+            messageBoxEl.textContent = texto.toUpperCase();
+            messageBoxEl.classList.remove('text-yellow-300', 'text-red-400', 'text-green-400', 'text-blue-400');
+            
+            // Remove animação anterior
+            messageBoxEl.classList.remove('neon-text');
+            
+            switch (tipo) {
+                case 'red':
+                    messageBoxEl.classList.add('text-red-400');
+                    messageBoxEl.style.textShadow = '0 0 10px #ff0000, 0 0 20px #ff0000';
+                    break;
+                case 'green':
+                    messageBoxEl.classList.add('text-green-400', 'neon-text');
+                    messageBoxEl.style.textShadow = '0 0 10px #00ff00, 0 0 20px #00ff00';
+                    break;
+                case 'blue':
+                    messageBoxEl.classList.add('text-blue-400');
+                    messageBoxEl.style.textShadow = '0 0 10px #0088ff, 0 0 20px #0088ff';
+                    break;
+                default:
+                    messageBoxEl.classList.add('text-yellow-300', 'neon-text');
+                    messageBoxEl.style.textShadow = '0 0 10px #ffd700, 0 0 20px #ffd700';
+            }
+        }
+        
+        function novaMao() {
+            gameInProgress = false;
+            limparMesa();
+            mostrarMensagem("💵 FAÇA SUA APOSTA PARA A PRÓXIMA MÃO 💵");
+            currentBet = 0;
+            atualizarSaldoEAposta();
+            selectBet(10);
+
+            bettingControlsEl.classList.remove('hidden');
+            gameControlsEl.classList.add('hidden');
+            newHandControlsEl.classList.add('hidden');
+        }
+
+        // --- Event Listeners ---
+        dealButton.addEventListener('click', iniciarJogo);
+        hitButton.addEventListener('click', () => {
+            if (gameInProgress) {
+                darCarta(playerHandEl, playerHand);
+            }
+        });
+        standButton.addEventListener('click', () => {
+            if (gameInProgress) {
+                turnoDoCroupier();
+            }
+        });
+        newHandButton.addEventListener('click', novaMao);
+
+        // --- Novas Funções e Listeners para Fichas de Aposta ---
+
+        function selectBet(amount) {
+            // Verifica se a ficha está desabilitada (saldo insuficiente)
+            const chipEl = document.querySelector(`.bet-chip[data-amount="${amount}"]`);
+            if (chipEl && chipEl.style.pointerEvents === 'none') {
+                return;
+            }
+
+            selectedBetAmount = amount;
+            betChips.forEach(chip => {
+                chip.classList.remove('selected');
+                if (parseInt(chip.dataset.amount) === amount) {
+                    chip.classList.add('selected');
+                }
+            });
+        }
+
+        betChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                selectBet(parseInt(chip.dataset.amount));
+            });
+        });
+
+        // Init
+        atualizarSaldoEAposta();
+        selectBet(10);
+        mostrarMensagem("💵 FAÇA SUA APOSTA PARA COMEÇAR 💵");
+
+    </script>
+</body>
+</html>

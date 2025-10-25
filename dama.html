@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Damas</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a biblioteca de ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 flex items-center justify-center p-4 font-sans">
+
+    <div class="max-w-4xl w-full">
+
+        <!-- Tela de Início -->
+        <div id="start-screen" class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl shadow-2xl p-8 text-center">
+            <div class="flex justify-center mb-6">
+                <!-- Ícone do Troféu -->
+                <i data-lucide="trophy" class="w-20 h-20 text-amber-600"></i>
+            </div>
+            <h1 class="text-5xl font-bold text-amber-900 mb-4">Jogo de Damas</h1>
+            <p class="text-xl text-amber-700 mb-8">Escolha o nível de dificuldade</p>
+            
+            <div class="space-y-4 max-w-md mx-auto">
+                <button
+                    id="start-easy"
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl transition transform hover:scale-105 text-xl shadow-lg"
+                >
+                    😊 Fácil
+                </button>
+                <button
+                    id="start-medium"
+                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-8 rounded-xl transition transform hover:scale-105 text-xl shadow-lg"
+                >
+                    🤔 Médio
+                </button>
+                <button
+                    id="start-hard"
+                    class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl transition transform hover:scale-105 text-xl shadow-lg"
+                >
+                    🔥 Difícil
+                </button>
+            </div>
+        </div>
+
+        <!-- Tela do Jogo (inicialmente oculta) -->
+        <div id="game-screen" class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl shadow-2xl p-6 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="text-center">
+                        <div class="text-sm text-amber-700 font-semibold">Você (Pretas)</div>
+                        <div id="player-score" class="text-3xl font-bold text-amber-900">12</div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <div id="game-status" class="text-2xl font-bold text-amber-900 mb-1">
+                        ▶ Sua Vez
+                    </div>
+                    <div id="difficulty-display" class="text-sm text-amber-600 capitalize">
+                        Dificuldade: Médio
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="text-center">
+                        <div class="text-sm text-amber-700 font-semibold">IA (Brancas)</div>
+                        <div id="ai-score" class="text-3xl font-bold text-amber-900">12</div>
+                    </div>
+                    <button
+                        id="restart-button"
+                        class="bg-amber-600 hover:bg-amber-700 text-white p-3 rounded-xl transition transform hover:scale-110"
+                    >
+                        <!-- Ícone de Reiniciar -->
+                        <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Container do Tabuleiro -->
+            <div class="bg-amber-900 p-2 sm:p-4 rounded-2xl shadow-2xl">
+                <div id="board-container" class="grid grid-cols-8 gap-0 bg-amber-950 rounded-xl overflow-hidden" style="aspect-ratio: 1/1;">
+                    <!-- Os quadrados serão gerados pelo JavaScript -->
+                </div>
+            </div>
+
+            <!-- Mensagem de Captura Obrigatória -->
+            <div id="capture-message" class="mt-4 bg-red-100 border-2 border-red-400 rounded-xl p-3 text-center hidden">
+                <p class="text-red-800 font-bold">⚠ Captura obrigatória! Você DEVE capturar a peça adversária.</p>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script type="module">
+        // --- Variáveis de Estado ---
+        let board = [];
+        let selectedPiece = null;
+        let validMoves = [];
+        let currentPlayer = 'black';
+        let gameStarted = false;
+        let difficulty = 'medium';
+        let winner = null;
+        let score = { black: 12, white: 12 };
+        let mustCapture = false;
+        let thinking = false;
+
+        // --- Referências do DOM ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const boardContainer = document.getElementById('board-container');
+        const playerScoreEl = document.getElementById('player-score');
+        const aiScoreEl = document.getElementById('ai-score');
+        const gameStatusEl = document.getElementById('game-status');
+        const difficultyEl = document.getElementById('difficulty-display');
+        const captureMessageEl = document.getElementById('capture-message');
+        const restartButton = document.getElementById('restart-button');
+        const startEasyBtn = document.getElementById('start-easy');
+        const startMediumBtn = document.getElementById('start-medium');
+        const startHardBtn = document.getElementById('start-hard');
+
+        // --- Funções Principais de UI ---
+
+        /**
+         * Renderiza o tabuleiro e as peças no DOM.
+         */
+        function renderBoard() {
+            boardContainer.innerHTML = ''; // Limpa o tabuleiro
+
+            board.forEach((row, rowIndex) => {
+                row.forEach((piece, colIndex) => {
+                    const square = document.createElement('div');
+                    
+                    const isLight = (rowIndex + colIndex) % 2 === 0;
+                    const isSelected = selectedPiece?.row === rowIndex && selectedPiece?.col === colIndex;
+                    const move = validMoves.find(m => m.row === rowIndex && m.col === colIndex);
+                    const isValidMove = !!move;
+                    const isCapture = move?.capture;
+
+                    // Classes base do quadrado
+                    square.className = `relative flex items-center justify-center cursor-pointer transition-all`;
+                    square.style.aspectRatio = '1/1';
+
+                    // Cor do quadrado
+                    if (isLight) {
+                        square.classList.add('bg-amber-200');
+                    } else if (isSelected) {
+                        square.classList.add('bg-blue-400');
+                    } else {
+                        square.classList.add('bg-amber-800');
+                    }
+
+                    // Destaque de movimento válido
+                    if (isValidMove) {
+                        square.classList.add('ring-4', 'ring-green-400', 'ring-inset');
+                    }
+
+                    // Cursor de espera
+                    if (thinking) {
+                        square.classList.add('cursor-wait');
+                    } else if (!isLight) {
+                         square.classList.add('hover:brightness-110');
+                    }
+
+                    // Adicionar evento de clique
+                    square.addEventListener('click', () => handleSquareClick(rowIndex, colIndex));
+
+                    // Renderizar a peça
+                    if (piece) {
+                        const pieceEl = document.createElement('div');
+                        pieceEl.className = `relative w-3/4 h-3/4 rounded-full flex items-center justify-center shadow-lg transition-transform ${
+                            isSelected ? 'scale-110' : 'hover:scale-105'
+                        } ${
+                            piece.color === 'black' 
+                            ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-black border-4 border-gray-700' 
+                            : 'bg-gradient-to-br from-gray-100 via-white to-gray-200 border-4 border-gray-300'
+                        }`;
+
+                        // Renderizar Dama (King)
+                        if (piece.king) {
+                            const kingIcon = document.createElement('i');
+                            kingIcon.setAttribute('data-lucide', 'sparkles');
+                            kingIcon.className = `w-1/2 h-1/2 ${piece.color === 'black' ? 'text-yellow-400' : 'text-amber-500'}`;
+                            pieceEl.appendChild(kingIcon);
+                        }
+
+                        // Sombra interna da peça
+                        const innerShadow = document.createElement('div');
+                        innerShadow.className = `absolute inset-2 rounded-full ${
+                            piece.color === 'black' 
+                            ? 'bg-gradient-to-br from-gray-700 to-gray-900' 
+                            : 'bg-gradient-to-br from-white to-gray-100'
+                        } shadow-inner`;
+                        pieceEl.appendChild(innerShadow);
+                        
+                        square.appendChild(pieceEl);
+                    }
+
+                    // Renderizar indicador de movimento válido
+                    if (isValidMove) {
+                        const moveHintContainer = document.createElement('div');
+                        moveHintContainer.className = `absolute inset-0 flex items-center justify-center ${isCapture ? 'animate-pulse' : ''}`;
+                        
+                        const moveHint = document.createElement('div');
+                        moveHint.className = `w-1/3 h-1/3 rounded-full ${isCapture ? 'bg-red-500' : 'bg-green-500'} opacity-70`;
+                        
+                        moveHintContainer.appendChild(moveHint);
+                        square.appendChild(moveHintContainer);
+                    }
+
+                    boardContainer.appendChild(square);
+                });
+            });
+
+            // Atualiza os ícones do Lucide que acabaram de ser criados
+            lucide.createIcons();
+        }
+
+        /**
+         * Atualiza os elementos da UI (placar, status, etc.)
+         */
+        function updateUI() {
+            // Atualiza placares
+            playerScoreEl.textContent = score.black;
+            aiScoreEl.textContent = score.white;
+
+            // Atualiza status do jogo
+            if (winner) {
+                gameStatusEl.textContent = (winner === 'black' ? '🏆 Você Venceu!' : '😔 IA Venceu');
+            } else if (thinking) {
+                gameStatusEl.textContent = '🤖 IA Pensando...';
+            } else {
+                gameStatusEl.textContent = (currentPlayer === 'black' ? '▶ Sua Vez' : '⏸ Vez da IA');
+            }
+            
+            // Atualiza dificuldade
+            const diffText = difficulty === 'easy' ? 'Fácil' : difficulty === 'medium' ? 'Médio' : 'Difícil';
+            difficultyEl.textContent = `Dificuldade: ${diffText}`;
+
+            // Exibe/oculta mensagem de captura obrigatória
+            if (mustCapture && !winner) {
+                captureMessageEl.classList.remove('hidden');
+            } else {
+                captureMessageEl.classList.add('hidden');
+            }
+            
+            // Alterna telas
+            if (gameStarted) {
+                startScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+            } else {
+                startScreen.classList.remove('hidden');
+                gameScreen.classList.add('hidden');
+            }
+
+            // Atualiza ícones estáticos
+            lucide.createIcons();
+        }
+
+        // --- Lógica do Jogo (Copiada do React e adaptada) ---
+
+        const initBoard = () => {
+            const newBoard = Array(8).fill(null).map(() => Array(8).fill(null));
+            
+            // Peças pretas (jogador humano)
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if ((row + col) % 2 === 1) {
+                        newBoard[row][col] = { color: 'black', king: false };
+                    }
+                }
+            }
+            
+            // Peças brancas (IA)
+            for (let row = 5; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if ((row + col) % 2 === 1) {
+                        newBoard[row][col] = { color: 'white', king: false };
+                    }
+                }
+            }
+            
+            board = newBoard;
+            currentPlayer = 'black';
+            winner = null;
+            score = { black: 12, white: 12 };
+            selectedPiece = null;
+            validMoves = [];
+            mustCapture = false;
+            thinking = false;
+        };
+
+        const getValidMovesForBoard = (boardState, row, col, captureOnly = false) => {
+            const piece = boardState[row][col];
+            if (!piece) return [];
+
+            const moves = [];
+            const captures = [];
+            const directions = piece.king 
+            ? [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+            : piece.color === 'black' 
+                ? [[1, -1], [1, 1]]
+                : [[-1, -1], [-1, 1]];
+
+            if (piece.king) {
+                // DAMA: pode mover quantas casas quiser na diagonal
+                directions.forEach(([dRow, dCol]) => {
+                    let steps = 1;
+                    let foundEnemy = false;
+                    let enemyPos = null;
+                    
+                    while (true) {
+                        const newRow = row + (dRow * steps);
+                        const newCol = col + (dCol * steps);
+                        
+                        if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+                        
+                        const currentCell = boardState[newRow][newCol];
+                        
+                        if (!foundEnemy) {
+                            if (!currentCell) {
+                                if (!captureOnly) {
+                                    moves.push({ row: newRow, col: newCol, capture: null });
+                                }
+                            } else if (currentCell.color !== piece.color) {
+                                foundEnemy = true;
+                                enemyPos = { row: newRow, col: newCol };
+                            } else {
+                                break;
+                            }
+                        } else {
+                            if (!currentCell) {
+                                captures.push({
+                                    row: newRow,
+                                    col: newCol,
+                                    capture: enemyPos
+                                });
+                            } else {
+                                break;
+                            }
+                        }
+                        steps++;
+                    }
+                });
+            } else {
+                // PEÇA NORMAL: move apenas uma casa
+                directions.forEach(([dRow, dCol]) => {
+                    const newRow = row + dRow;
+                    const newCol = col + dCol;
+
+                    if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                        if (!boardState[newRow][newCol] && !captureOnly) {
+                            moves.push({ row: newRow, col: newCol, capture: null });
+                        }
+
+                        const captureRow = row + dRow * 2;
+                        const captureCol = col + dCol * 2;
+                        if (captureRow >= 0 && captureRow < 8 && captureCol >= 0 && captureCol < 8) {
+                            const capturedPiece = boardState[newRow][newCol];
+                            if (capturedPiece && capturedPiece.color !== piece.color && !boardState[captureRow][captureCol]) {
+                                captures.push({
+                                    row: captureRow,
+                                    col: captureCol,
+                                    capture: { row: newRow, col: newCol }
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            return captures.length > 0 ? captures : moves;
+        };
+
+        const getAllCaptureMoves = (boardState, color) => {
+            const captureMoves = [];
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = boardState[row][col];
+                    if (piece && piece.color === color) {
+                        const moves = getValidMovesForBoard(boardState, row, col, true);
+                        if (moves.some(m => m.capture)) {
+                            captureMoves.push({ row, col, moves: moves.filter(m => m.capture) });
+                        }
+                    }
+                }
+            }
+            return captureMoves;
+        };
+
+        const getAllPossibleMoves = (boardState, color) => {
+            const captureMoves = getAllCaptureMoves(boardState, color);
+            
+            if (captureMoves.length > 0) {
+                return captureMoves;
+            }
+
+            const normalMoves = [];
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = boardState[row][col];
+                    if (piece && piece.color === color) {
+                        const moves = getValidMovesForBoard(boardState, row, col, false);
+                        if (moves.length > 0) {
+                            normalMoves.push({ row, col, moves });
+                        }
+                    }
+                }
+            }
+            return normalMoves;
+        };
+
+        const handleSquareClick = (row, col) => {
+            if (winner || currentPlayer !== 'black' || thinking) return;
+
+            const piece = board[row][col];
+            const captureMoves = getAllCaptureMoves(board, 'black');
+            const hasCaptures = captureMoves.length > 0;
+
+            if (selectedPiece) {
+                const move = validMoves.find(m => m.row === row && m.col === col);
+                if (move) {
+                    executeMove(board, selectedPiece.row, selectedPiece.col, row, col, move.capture);
+                } else if (piece && piece.color === 'black') {
+                    const moves = getValidMovesForBoard(board, row, col, hasCaptures);
+                    if (hasCaptures && !moves.some(m => m.capture)) {
+                        return; // Não pode selecionar peça que não captura
+                    }
+                    selectedPiece = { row, col };
+                    validMoves = moves;
+                } else {
+                    selectedPiece = null;
+                    validMoves = [];
+                }
+            } else if (piece && piece.color === 'black') {
+                const moves = getValidMovesForBoard(board, row, col, hasCaptures);
+                if (hasCaptures && !moves.some(m => m.capture)) {
+                    return; // Não pode selecionar peça que não captura
+                }
+                selectedPiece = { row, col };
+                validMoves = moves;
+                mustCapture = hasCaptures;
+            }
+            
+            renderBoard(); // Atualiza a seleção e movimentos
+            updateUI(); // Atualiza a mensagem de captura
+        };
+
+        const executeMove = (currentBoard, fromRow, fromCol, toRow, toCol, capture) => {
+            const newBoard = currentBoard.map(row => row.map(cell => cell ? { ...cell } : null));
+            const piece = { ...newBoard[fromRow][fromCol] };
+            
+            newBoard[toRow][toCol] = piece;
+            newBoard[fromRow][fromCol] = null;
+
+            let newScore = { ...score };
+            if (capture) {
+                newBoard[capture.row][capture.col] = null;
+                newScore[piece.color === 'black' ? 'white' : 'black']--;
+            }
+
+            // Promover a dama
+            if ((piece.color === 'black' && toRow === 7) || (piece.color === 'white' && toRow === 0)) {
+                newBoard[toRow][toCol].king = true;
+            }
+
+            board = newBoard;
+            score = newScore;
+            selectedPiece = null;
+            validMoves = [];
+
+            // Verificar capturas múltiplas
+            if (capture) {
+                const moreMoves = getValidMovesForBoard(newBoard, toRow, toCol, true).filter(m => m.capture);
+                if (moreMoves.length > 0) {
+                    selectedPiece = { row: toRow, col: toCol };
+                    validMoves = moreMoves;
+                    mustCapture = true;
+                    renderBoard();
+                    updateUI();
+                    return;
+                }
+            }
+
+            mustCapture = false;
+
+            // Verificar vitória
+            if (newScore.white === 0) {
+                winner = 'black';
+                renderBoard();
+                updateUI();
+                return;
+            }
+            if (newScore.black === 0) {
+                winner = 'white';
+                renderBoard();
+                updateUI();
+                return;
+            }
+
+            // Trocar jogador
+            const nextPlayer = piece.color === 'black' ? 'white' : 'black';
+            currentPlayer = nextPlayer;
+
+            // IA joga
+            if (nextPlayer === 'white') {
+                thinking = true;
+                renderBoard(); // Atualiza o tabuleiro antes da IA
+                updateUI(); // Mostra "IA Pensando..."
+                
+                setTimeout(() => {
+                    makeAIMove(newBoard, newScore);
+                }, 800);
+            } else {
+                const captures = getAllCaptureMoves(newBoard, 'black');
+                mustCapture = captures.length > 0;
+                renderBoard();
+                updateUI();
+            }
+        };
+
+        const evaluateBoard = (boardState) => {
+            let score = 0;
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = boardState[row][col];
+                    if (piece) {
+                        const value = piece.king ? 30 : 10;
+                        const positionBonus = piece.color === 'white' ? (7 - row) : row;
+                        score += piece.color === 'white' ? (value + positionBonus) : -(value + positionBonus);
+                    }
+                }
+            }
+            return score;
+        };
+
+        const simulateMove = (boardState, fromRow, fromCol, toRow, toCol, capture) => {
+            const newBoard = boardState.map(row => row.map(cell => cell ? { ...cell } : null));
+            const piece = { ...newBoard[fromRow][fromCol] };
+            
+            newBoard[toRow][toCol] = piece;
+            newBoard[fromRow][fromCol] = null;
+
+            if (capture) {
+                newBoard[capture.row][capture.col] = null;
+            }
+
+            if ((piece.color === 'black' && toRow === 7) || (piece.color === 'white' && toRow === 0)) {
+                newBoard[toRow][toCol].king = true;
+            }
+
+            return newBoard;
+        };
+
+        const minimax = (boardState, depth, alpha, beta, maximizing, startTime, maxTime) => {
+            if (Date.now() - startTime > maxTime || depth === 0) {
+                return { score: evaluateBoard(boardState), move: null };
+            }
+
+            const color = maximizing ? 'white' : 'black';
+            const allMoves = getAllPossibleMoves(boardState, color);
+
+            if (allMoves.length === 0) {
+                return { score: maximizing ? -10000 : 10000, move: null };
+            }
+
+            let bestMove = null;
+            let bestScore = maximizing ? -Infinity : Infinity;
+
+            for (const pieceMove of allMoves) {
+                for (const move of pieceMove.moves) {
+                    if (Date.now() - startTime > maxTime) break;
+                    
+                    const newBoard = simulateMove(boardState, pieceMove.row, pieceMove.col, move.row, move.col, move.capture);
+                    const result = minimax(newBoard, depth - 1, alpha, beta, !maximizing, startTime, maxTime);
+
+                    if (maximizing) {
+                        if (result.score > bestScore) {
+                            bestScore = result.score;
+                            bestMove = { from: { row: pieceMove.row, col: pieceMove.col }, to: move };
+                        }
+                        alpha = Math.max(alpha, bestScore);
+                    } else {
+                        if (result.score < bestScore) {
+                            bestScore = result.score;
+                            bestMove = { from: { row: pieceMove.row, col: pieceMove.col }, to: move };
+                        }
+                        beta = Math.min(beta, bestScore);
+                    }
+
+                    if (beta <= alpha) break;
+                }
+            }
+
+            return { score: bestScore, move: bestMove };
+        };
+
+        const makeAIMove = (currentBoard, currentScore) => {
+            const depthMap = { easy: 2, medium: 4, hard: 6 };
+            const depth = depthMap[difficulty];
+            
+            const startTime = Date.now();
+            const maxTime = 15000;
+            let bestResult = null;
+            
+            for (let d = 1; d <= depth; d++) {
+                if (Date.now() - startTime > maxTime) break;
+                const result = minimax(currentBoard, d, -Infinity, Infinity, true, startTime, maxTime);
+                if (result && result.move) {
+                    bestResult = result;
+                }
+            }
+
+            thinking = false;
+
+            if (bestResult && bestResult.move) {
+                const { from, to } = bestResult.move;
+                
+                // Executar movimento da IA
+                const newBoard = currentBoard.map(row => row.map(cell => cell ? { ...cell } : null));
+                const piece = { ...newBoard[from.row][from.col] };
+                
+                newBoard[to.row][to.col] = piece;
+                newBoard[from.row][from.col] = null;
+
+                let newScore = { ...currentScore };
+                if (to.capture) {
+                    newBoard[to.capture.row][to.capture.col] = null;
+                    newScore.black--;
+                }
+
+                if (piece.color === 'white' && to.row === 0) {
+                    newBoard[to.row][to.col].king = true;
+                }
+
+                board = newBoard;
+                score = newScore;
+
+                // Verificar vitória
+                if (newScore.black === 0) {
+                    winner = 'white';
+                    renderBoard();
+                    updateUI();
+                    return;
+                }
+
+                // Verificar movimentos sem captura disponível
+                const allMovesBlack = getAllPossibleMoves(newBoard, 'black');
+                if (allMovesBlack.length === 0) {
+                    winner = 'white';
+                    renderBoard();
+                    updateUI();
+                    return;
+                }
+
+                currentPlayer = 'black';
+                const captures = getAllCaptureMoves(newBoard, 'black');
+                mustCapture = captures.length > 0;
+            } else {
+                // Se não houver movimento, o jogador atual (IA) perde
+                winner = 'black'; 
+            }
+
+            renderBoard();
+            updateUI();
+        };
+
+
+        // --- Inicialização ---
+
+        function startGame(level) {
+            difficulty = level;
+            gameStarted = true;
+            initBoard();
+            renderBoard();
+            updateUI();
+        }
+
+        // Adiciona os event listeners aos botões
+        startEasyBtn.addEventListener('click', () => startGame('easy'));
+        startMediumBtn.addEventListener('click', () => startGame('medium'));
+        startHardBtn.addEventListener('click', () => startGame('hard'));
+        
+        restartButton.addEventListener('click', () => {
+            gameStarted = false;
+            initBoard(); // Reseta o estado
+            updateUI(); // Mostra a tela inicial
+        });
+
+        // Inicializa o estado e a UI na primeira carga
+        initBoard();
+        updateUI();
+
+    </script>
+</body>
+</html>

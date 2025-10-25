@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#6366f1">
+    <title>Central de Jogos - Carlos Antonio de Oliveira Piquet</title>
+    
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -moz-user-select: none;
+        }
+        
+        /* Safe area para notch de iPhone */
+        @supports(padding: max(0px)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+        
+        /* Animações personalizadas */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        .game-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-card:active {
+            transform: translateY(-4px) scale(0.98);
+        }
+        
+        /* Gradientes de fundo dos cards */
+        .bg-slot-machine {
+            background: linear-gradient(135deg, #991b1b 0%, #dc2626 50%, #991b1b 100%);
+        }
+        
+        .bg-water-game {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%);
+        }
+        
+        .bg-checkers {
+            background: linear-gradient(135deg, #78350f 0%, #d97706 50%, #78350f 100%);
+        }
+        
+        .bg-puzzle {
+            background: linear-gradient(135deg, #7c2d12 0%, #a855f7 50%, #7c2d12 100%);
+        }
+        
+        .bg-blackjack {
+            background: linear-gradient(135deg, #115e59 0%, #14b8a6 50%, #115e59 100%);
+        }
+        
+        .bg-roulette {
+            background: linear-gradient(135deg, #4c1d95 0%, #8b5cf6 50%, #4c1d95 100%);
+        }
+        
+        /* Efeito de brilho nos emojis */
+        .emoji-glow {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+        }
+        
+        /* Previne zoom em iOS */
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 min-h-screen overflow-x-hidden">
+    
+    <!-- Container principal -->
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
+        
+        <!-- Header -->
+        <div class="text-center mb-8 sm:mb-12 fade-in">
+            <div class="mb-4 float-animation">
+                <span class="text-7xl sm:text-8xl md:text-9xl emoji-glow">🎮</span>
+            </div>
+            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-3 sm:mb-4 tracking-tight">
+                Central de Jogos
+            </h1>
+            <p class="text-lg sm:text-xl md:text-2xl text-indigo-200 font-semibold">
+                Escolha seu jogo favorito e divirta-se!
+            </p>
+            <div class="mt-3 text-sm sm:text-base text-indigo-300">
+                Desenvolvido por <span class="font-bold text-white">Carlos Antonio de Oliveira Piquet</span>
+            </div>
+        </div>
+        
+        <!-- Grid de Jogos -->
+        <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            
+            <!-- Card 1: Caça-Níquel -->
+            <a href="cacaniquel.html" class="game-card bg-slot-machine rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-red-400 fade-in" style="animation-delay: 0.1s;">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🎰</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Caça-Níquel</h2>
+                    <p class="text-red-100 text-sm sm:text-base mb-4">
+                        Gire os rolos e tente a sorte!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🎲 Sorte</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">💎 Jackpot</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 2: Jogo de Bolas -->
+            <a href="bolinha.html" class="game-card bg-water-game rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-blue-400 fade-in" style="animation-delay: 0.2s;">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🌊</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Jogo de Bolas</h2>
+                    <p class="text-blue-100 text-sm sm:text-base mb-4">
+                        Física e estratégia aquática!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🎯 Física</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">⏱️ Tempo</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 3: Jogo de Damas -->
+            <a href="dama.html" class="game-card bg-checkers rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-amber-400 fade-in" style="animation-delay: 0.3s;">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">👑</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Jogo de Damas</h2>
+                    <p class="text-amber-100 text-sm sm:text-base mb-4">
+                        Estratégia contra IA inteligente!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🧠 Estratégia</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🤖 IA</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 4: Quebra-Cabeça -->
+            <a href="quebracabeca.html" class="game-card bg-puzzle rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-purple-400 fade-in" style="animation-delay: 0.4s;">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🧩</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Quebra-Cabeça</h2>
+                    <p class="text-purple-100 text-sm sm:text-base mb-4">
+                        Deslize e resolva o puzzle!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🧩 Lógica</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">⚡ Desafio</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 5: Blackjack -->
+            <a href="blackjack.html" class="game-card bg-blackjack rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-teal-400 fade-in" style="animation-delay: 0.5s;">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🃏</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Blackjack 21</h2>
+                    <p class="text-teal-100 text-sm sm:text-base mb-4">
+                        Chegue a 21 e vença o dealer!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🎰 Casino</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">♠️ Cartas</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 6: Roleta -->
+            <a href="roleta.html" class="game-card bg-roulette rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-violet-400 fade-in" style="animation-delay: 0.6s;">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🎡</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Roleta Europeia</h2>
+                    <p class="text-violet-100 text-sm sm:text-base mb-4">
+                        Faça suas apostas e gire!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🎲 Sorte</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">💰 Apostas</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 7: Sueca -->
+            <a href="sueca.html" class="game-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-yellow-400 fade-in" style="animation-delay: 0.7s; background: linear-gradient(135deg, #854d0e 0%, #ca8a04 50%, #854d0e 100%);">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🃏</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Sueca Deluxe</h2>
+                    <p class="text-yellow-100 text-sm sm:text-base mb-4">
+                        Jogo de cartas português clássico!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">♠️ Cartas</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">👥 4 Jogadores</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Card 8: Craps (Dados) -->
+            <a href="dados.html" class="game-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-green-400 fade-in" style="animation-delay: 0.8s; background: linear-gradient(135deg, #065f46 0%, #10b981 50%, #065f46 100%);">
+                <div class="text-center">
+                    <div class="text-6xl sm:text-7xl mb-4 emoji-glow">🎲</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Craps Deluxe</h2>
+                    <p class="text-green-100 text-sm sm:text-base mb-4">
+                        Jogo de dados do casino!
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🎰 Casino</span>
+                        <span class="bg-white/20 px-2 py-1 rounded-full text-white">🎲 Dados</span>
+                    </div>
+                </div>
+            </a>
+            
+        </div>
+        
+        <!-- Footer -->
+        <footer class="w-full max-w-6xl mt-12 mb-8">
+            <!-- Informações do Desenvolvedor -->
+            <div class="text-center mb-6 fade-in" style="animation-delay: 0.7s;">
+                <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
+                    <h3 class="text-xl sm:text-2xl font-bold text-white mb-3">👨‍💻 Desenvolvedor</h3>
+                    <p class="text-base sm:text-lg text-white/90 mb-2">
+                        <span class="font-semibold">Carlos Antonio de Oliveira Piquet</span>
+                    </p>
+                    <p class="text-sm sm:text-base text-indigo-200">
+                        📧 <a href="mailto:carlospiquet.projetos@gmail.com" class="hover:text-white transition-colors underline">
+                            carlospiquet.projetos@gmail.com
+                        </a>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Termos e Licença -->
+            <div class="text-center text-white/70 text-xs sm:text-sm space-y-2 fade-in" style="animation-delay: 0.8s;">
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-3">
+                    <a href="terms.html" class="hover:text-white transition-colors underline">Termos de Uso</a>
+                    <span class="hidden sm:inline">•</span>
+                    <a href="privacy.html" class="hover:text-white transition-colors underline">Política de Privacidade</a>
+                    <span class="hidden sm:inline">•</span>
+                    <span>Licença MIT © 2024</span>
+                </div>
+                <p class="mb-2">✨ Todos os jogos são otimizados para mobile e desktop</p>
+                <p>💡 Clique em qualquer card para começar a jogar</p>
+            </div>
+        </footer>
+        
+    </div>
+    
+    <script>
+        // Previne comportamento padrão de gestos
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
+        
+        // Feedback háptico nos cards (se disponível)
+        const gameCards = document.querySelectorAll('.game-card');
+        gameCards.forEach(card => {
+            card.addEventListener('touchstart', () => {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(10);
+                }
+            });
+        });
+        
+        // Previne scroll bounce no iOS
+        let lastTouchY = 0;
+        document.addEventListener('touchstart', (e) => {
+            lastTouchY = e.touches[0].clientY;
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', (e) => {
+            const touchY = e.touches[0].clientY;
+            lastTouchY = touchY;
+        }, { passive: false });
+    </script>
+</body>
+</html>

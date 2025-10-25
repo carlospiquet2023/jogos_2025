@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jogo de Bolas">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="description" content="Jogo de bolas - Diversão garantida!">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSm9nbyBkZSBCb2xhcyIsInNob3J0X25hbWUiOiJCb2xhcyIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzNiODJmNiIsInRoZW1lX2NvbG9yIjoiIzNiODJmNiIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sLCUzQ3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxOTInIGhlaWdodD0nMTkyJyUzRSUzQ2NpcmNsZSBjeD0nOTYnIGN5PSc5Nicgcj0nOTYnIGZpbGw9JyUyMzNiODJmNicvJTNFJTNDY2lyY2xlIGN4PSc5NicgY3k9Jzk2JyByPSc1MCcgZmlsbD0nJTIzZmZmJy8lM0UlM0Mvc3ZnJTNFIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifSx7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMiclM0UlM0NjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjU2JyBmaWxsPSclMjMzYjgyZjYnLyUzRSUzQ2NpcmNsZSBjeD0nMjU2JyBjeT0nMjU2JyByPScxMzAnIGZpbGw9JyUyM2ZmZicvJTNFJTNDL3N2ZyUzRSIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192'%3E%3Ccircle cx='96' cy='96' r='96' fill='%233b82f6'/%3E%3Ccircle cx='96' cy='96' r='50' fill='%23fff'/%3E%3C/svg%3E">
+    
+    <title>Jogo de Bolas</title>
+    <!-- Carrega o TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega o Matter.js (motor de física) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        /* Fonte personalizada para um visual mais lúdico */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        body {
+            font-family: 'Fredoka', sans-serif;
+            touch-action: none; /* Bloqueia totalmente gestos do navegador */
+            user-select: none; /* Impede seleção de texto */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -moz-user-select: none;
+        }
+        
+        /* Safe area para notch de iPhone */
+        @supports(padding: max(0px)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+
+        /* Efeito de "pressionar" o botão */
+        .game-button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            position: relative;
+            background: linear-gradient(145deg, #ff6b35, #ff4500);
+            border: none !important;
+            box-shadow: 
+                0 8px 0 #cc3700,
+                0 12px 20px rgba(0, 0, 0, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Grade/textura branca nos botões */
+        .game-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .game-button:active {
+            transform: translateY(4px) scale(0.98);
+            box-shadow: 
+                0 4px 0 #cc3700,
+                0 6px 15px rgba(0, 0, 0, 0.4),
+                inset 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-button span {
+            display: none; /* Esconde o texto A e B */
+        }
+        
+        /* Previne zoom em iOS */
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+
+        /* Fundo do jogo */
+        .game-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.imgur.com/NTpUOB0.jpeg');
+            background-size: cover;
+            background-position: center;
+            animation: underwater-sway 20s ease-in-out infinite alternate;
+            z-index: 0;
+            pointer-events: none; /* Permite cliques passarem através */
+        }
+        
+        /* Imagem de fallback caso a principal falhe */
+        .game-background[data-failed="true"] {
+            background-image: linear-gradient(to top, #005c97, #36aee4);
+        }
+
+        /* Canvas por cima do fundo */
+        #game-canvas {
+            position: relative;
+            z-index: 1;
+            pointer-events: none; /* Permite cliques passarem através do canvas também */
+        }
+        
+        /* UI elementos devem receber cliques */
+        .ui-element {
+            pointer-events: auto;
+        }
+
+        @keyframes underwater-sway {
+            from {
+                background-position: 45% 50%;
+            }
+            to {
+                background-position: 55% 50%;
+            }
+        }
+
+        /* Estilo para as bolhas (desenhadas via JS) */
+        /* (Este estilo é conceitual, o desenho é feito no canvas) */
+
+        /* Tela Inicial */
+        .start-screen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            animation: gradient-shift 6s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .start-button {
+            animation: pulse-button 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-button {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 60px rgba(255, 215, 0, 0.6); }
+        }
+
+        /* Sistema de Combo */
+        .combo-message {
+            animation: combo-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes combo-pop {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Placar moderno */
+        .score-display {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Timer estilizado */
+        .timer-display {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.05em;
+        }
+
+        /* Peixe nadando */
+        .fish {
+            position: absolute;
+            font-size: 3rem;
+            animation: swim 15s linear infinite;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        /* Peixe intrometido */
+        .intruder-fish {
+            position: absolute;
+            font-size: 2rem;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            top: 25%;
+            left: -100px;
+        }
+
+        .intruder-fish.active {
+            animation: intruder-swim 4s ease-in-out;
+        }
+
+        @keyframes intruder-swim {
+            0% {
+                left: -100px;
+                opacity: 0;
+                transform: scaleX(-1);
+            }
+            10% {
+                opacity: 1;
+                transform: scaleX(-1);
+            }
+            20% {
+                left: 20%;
+                transform: scaleX(-1) rotate(5deg);
+            }
+            40% {
+                left: 40%;
+                transform: scaleX(-1) rotate(-3deg);
+            }
+            60% {
+                left: 60%;
+                transform: scaleX(-1) rotate(4deg);
+            }
+            80% {
+                left: 80%;
+                transform: scaleX(-1) rotate(-2deg);
+            }
+            90% {
+                opacity: 1;
+                transform: scaleX(-1);
+            }
+            100% {
+                left: calc(100% + 100px);
+                opacity: 0;
+                transform: scaleX(-1);
+            }
+        }
+
+        @keyframes swim {
+            0% {
+                left: calc(100% + 100px);
+                transform: scaleX(1);
+            }
+            49% {
+                left: -100px;
+                transform: scaleX(1);
+            }
+            50% {
+                left: -100px;
+                transform: scaleX(-1);
+            }
+            99% {
+                left: calc(100% + 100px);
+                transform: scaleX(-1);
+            }
+            100% {
+                left: calc(100% + 100px);
+                transform: scaleX(1);
+            }
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900 flex flex-col items-center justify-center overflow-hidden">
+
+    <!-- Container principal do jogo -->
+    <div class="relative w-full h-full flex flex-col items-center justify-center gap-0">
+        
+        <!-- 1. Moldura do Brinquedo com Tela Integrada -->
+        <div class="relative w-full flex-1 bg-blue-500 shadow-2xl md:rounded-t-3xl md:border-t-8 md:border-x-8 md:border-blue-700 md:max-w-md p-3 md:p-6 overflow-hidden">
+            
+            <!-- Decoração lateral esquerda (grade) -->
+            <div class="absolute left-0 top-0 bottom-0 w-8 md:w-10 bg-gradient-to-r from-blue-400/50 to-transparent" style="background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 2px, transparent 2px, transparent 4px);"></div>
+            
+            <!-- Decoração lateral direita (grade) -->
+            <div class="absolute right-0 top-0 bottom-0 w-8 md:w-10 bg-gradient-to-l from-blue-400/50 to-transparent" style="background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 2px, transparent 2px, transparent 4px);"></div>
+            
+            <!-- Visor principal (onde o jogo acontece) -->
+            <div class="relative w-full h-full rounded-lg md:rounded-xl overflow-hidden shadow-inner bg-black border-4 border-blue-600/50">
+                <!-- Fundo do jogo -->
+                <div class="game-background"></div>
+                
+                <!-- Peixe nadando -->
+                <div class="fish" style="top: 60%;">🐠</div>
+                
+                <!-- Peixe intrometido -->
+                <div id="intruder-fish" class="intruder-fish">🐡</div>
+                
+                <!-- Canvas onde a física será renderizada -->
+                <canvas id="game-canvas" width="400" height="600"></canvas>
+                
+                <!-- Sistema de Combo -->
+                <div id="combo-display" class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden">
+                    <div class="combo-message text-6xl font-bold text-center drop-shadow-2xl"></div>
+                </div>
+                
+                <!-- Placar Aprimorado - MENOR -->
+                <div class="absolute top-2 left-1/2 -translate-x-1/2 flex gap-2 ui-element">
+                    <!-- Timer -->
+                    <div class="score-display rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                        <span class="text-sm">⏱️</span>
+                        <span id="timer" class="timer-display text-sm font-bold text-white">00:00</span>
+                    </div>
+                    
+                    <!-- Placar -->
+                    <div class="score-display rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                        <span class="text-sm">🎯</span>
+                        <span class="text-sm font-bold text-white">
+                            <span id="score">0</span>/<span id="total-balls">12</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Overlay para UI (Placar) - Removido pois foi substituído pelo novo -->
+                
+                <!-- Mensagem de Vitória Aprimorada -->
+                <div id="win-message" class="absolute inset-0 bg-black/70 backdrop-blur-md flex-col items-center justify-center text-center text-white p-8 hidden">
+                    <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-8 max-w-md shadow-2xl">
+                        <h2 class="text-6xl font-bold mb-4 text-gray-900">🎉 Parabéns!</h2>
+                        <p class="text-2xl mb-4 text-gray-800">Você completou o jogo!</p>
+                        <div class="bg-white/30 rounded-xl p-4 mb-6">
+                            <p class="text-xl font-semibold text-gray-900">⏱️ Seu tempo:</p>
+                            <p id="final-time" class="text-5xl font-bold text-gray-900">00:00</p>
+                        </div>
+                        <button id="reset-button" class="w-full px-6 py-4 bg-gray-900 text-white rounded-full font-bold text-xl shadow-lg hover:bg-gray-800 transition-all">
+                            🔄 Jogar Novamente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Base com Botões de Controle (continuação da moldura) -->
+        <div class="w-full md:max-w-md bg-blue-500 md:rounded-b-3xl md:border-b-8 md:border-x-8 md:border-blue-700 shadow-2xl">
+            <!-- Faixa "Water Game" -->
+            <div class="text-center py-2 bg-gradient-to-b from-blue-400 to-blue-500 relative">
+                <div class="inline-block px-6 py-1">
+                    <span class="text-xl md:text-2xl font-bold italic text-white drop-shadow-lg" style="font-family: 'Brush Script MT', cursive; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Carlos Piquet</span>
+                </div>
+                <!-- Botão Reset -->
+                <button id="reset-game" class="absolute right-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-red-500 text-white rounded-lg font-bold shadow-lg hover:bg-red-600 transition-colors text-lg">
+                    🔄
+                </button>
+            </div>
+            
+            <!-- Painel de controle com detalhes -->
+            <div class="flex items-center justify-between px-4 md:px-8 py-4 md:py-6">
+                <!-- Botão A (Esquerda) -->
+                <div class="flex flex-col items-center gap-2">
+                    <!-- Linhas decorativas ao lado -->
+                    <div class="flex gap-1 mb-1">
+                        <div class="w-8 h-1 bg-white/40 rounded"></div>
+                        <div class="w-8 h-1 bg-white/40 rounded"></div>
+                        <div class="w-8 h-1 bg-white/40 rounded"></div>
+                    </div>
+                    <button id="button-a" class="game-button w-20 h-20 md:w-24 md:h-24 rounded-full transition-transform duration-100 ease-out flex items-center justify-center">
+                        <span class="text-5xl md:text-6xl font-bold text-yellow-800">A</span>
+                    </button>
+                </div>
+                
+                <!-- Controles centrais: Pause/Play e Relógio -->
+                <div class="flex gap-8 items-center">
+                    <!-- Botão Pause/Play -->
+                    <button id="pause-button" class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border-4 border-blue-800 shadow-lg flex items-center justify-center text-white text-2xl hover:from-gray-700 hover:to-gray-800 transition-all ui-element">
+                        <span id="pause-icon">⏸️</span>
+                    </button>
+                    
+                    <!-- Relógio Real -->
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border-4 border-blue-800 shadow-lg flex items-center justify-center">
+                        <span id="real-clock" class="text-white text-xs md:text-sm font-bold">00:00</span>
+                    </div>
+                </div>
+                
+                <!-- Botão B (Direita) -->
+                <div class="flex flex-col items-center gap-2">
+                    <!-- Linhas decorativas ao lado -->
+                    <div class="flex gap-1 mb-1">
+                        <div class="w-8 h-1 bg-white/40 rounded"></div>
+                        <div class="w-8 h-1 bg-white/40 rounded"></div>
+                        <div class="w-8 h-1 bg-white/40 rounded"></div>
+                    </div>
+                    <button id="button-b" class="game-button w-20 h-20 md:w-24 md:h-24 rounded-full transition-transform duration-100 ease-out flex items-center justify-center">
+                        <span class="text-5xl md:text-6xl font-bold text-yellow-800">B</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- 1. Setup do Matter.js ---
+        const { Engine, Render, Runner, World, Bodies, Body, Events, Composite, Common } = Matter;
+
+        // Elementos do DOM
+        const canvas = document.getElementById('game-canvas');
+        const scoreEl = document.getElementById('score');
+        const totalBallsEl = document.getElementById('total-balls');
+        const timerEl = document.getElementById('timer');
+        const finalTimeEl = document.getElementById('final-time');
+        const comboDisplayEl = document.getElementById('combo-display');
+        const winMessageEl = document.getElementById('win-message');
+        const resetButton = document.getElementById('reset-button');
+        const resetGameButton = document.getElementById('reset-game');
+        const btnA = document.getElementById('button-a');
+        const btnB = document.getElementById('button-b');
+        const pauseButton = document.getElementById('pause-button');
+        const pauseIcon = document.getElementById('pause-icon');
+        const realClockEl = document.getElementById('real-clock');
+        const intruderFish = document.getElementById('intruder-fish');
+        const ctx = canvas.getContext('2d');
+
+        // Variáveis do Timer
+        let gameStartTime = 0;
+        let timerInterval = null;
+        let gameActive = false;
+        let timerPaused = false;
+        let pausedTime = 0;
+
+        // Variáveis do Peixe Intrometido
+        let intruderTimeout = null;
+        let intruderBody = null;
+
+        // Variáveis do Sistema de Combo
+        let lastScoreTime = 0;
+        let comboCount = 0;
+        let comboTimeout = null;
+
+        // --- Relógio Real ---
+        function updateRealClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            realClockEl.textContent = `${hours}:${minutes}`;
+        }
+        
+        // Atualiza o relógio a cada segundo
+        setInterval(updateRealClock, 1000);
+        updateRealClock(); // Atualiza imediatamente
+
+        // --- Botão Pause/Play (só pausa o cronômetro, NÃO o jogo) ---
+        pauseButton.addEventListener('click', () => {
+            if (!gameActive) return; // Só funciona se o jogo estiver ativo
+            
+            timerPaused = !timerPaused;
+            
+            if (timerPaused) {
+                // Pausar cronômetro
+                pauseIcon.textContent = '▶️';
+                pausedTime = Date.now();
+            } else {
+                // Continuar cronômetro
+                pauseIcon.textContent = '⏸️';
+                const pauseDuration = Date.now() - pausedTime;
+                gameStartTime += pauseDuration; // Ajusta o tempo inicial
+            }
+        });
+
+        // --- Peixe Intrometido ---
+        function spawnIntruderFish() {
+            if (!gameActive) return;
+            
+            console.log('🐡 Peixe intrometido aparecendo com colisão!');
+            
+            // Remove classe anterior
+            intruderFish.classList.remove('active');
+            
+            // Force reflow
+            void intruderFish.offsetWidth;
+            
+            // Cria corpo físico do peixe
+            const fishY = H * 0.25;
+            intruderBody = Bodies.rectangle(-50, fishY, 60, 30, {
+                isStatic: false,
+                label: 'intruder-fish',
+                render: { visible: false }, // Invisível, só o HTML é visível
+                friction: 0.1,
+                frictionAir: 0.02,
+                restitution: 0.8,
+                density: 0.002
+            });
+            
+            // Adiciona ao mundo
+            World.add(world, intruderBody);
+            
+            // Define velocidade do peixe
+            Body.setVelocity(intruderBody, { x: 8, y: 0 });
+            
+            // Adiciona animação visual
+            intruderFish.classList.add('active');
+            
+            // Remove após 4 segundos
+            setTimeout(() => {
+                intruderFish.classList.remove('active');
+                if (intruderBody) {
+                    World.remove(world, intruderBody);
+                    intruderBody = null;
+                }
+                console.log('🐡 Peixe intrometido saiu!');
+            }, 4000);
+            
+            // Agenda próxima aparição
+            scheduleIntruder();
+        }
+        
+        function scheduleIntruder() {
+            if (intruderTimeout) {
+                clearTimeout(intruderTimeout);
+            }
+            
+            // Entre 8 e 15 segundos
+            const randomTime = Math.random() * 7000 + 8000;
+            
+            console.log(`⏱️ Próximo peixe em ${(randomTime/1000).toFixed(1)}s`);
+            
+            intruderTimeout = setTimeout(() => {
+                spawnIntruderFish();
+            }, randomTime);
+        }
+
+        // Configuração do tamanho do canvas
+        // (Faz com que o canvas interno tenha a mesma resolução do seu elemento)
+        const canvasContainer = canvas.parentElement;
+        
+        // Função para ajustar o tamanho do canvas
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvasContainer.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            // Ajusta o contexto para o DPR
+            ctx.scale(dpr, dpr);
+            
+            return { width: rect.width, height: rect.height };
+        }
+        
+        const size = resizeCanvas();
+        let W = size.width;
+        let H = size.height;
+        
+        // Reajusta o canvas quando a orientação mudar
+        window.addEventListener('resize', () => {
+            const newSize = resizeCanvas();
+            W = newSize.width;
+            H = newSize.height;
+        });
+
+        // Variáveis do jogo
+        const NUM_BALLS = 17; // Aumentado de 12 para 17 bolinhas
+        const HOLE_COLOR = '#1e293b'; // Cinza escuro para buracos
+        const BALL_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316']; // Vermelho, Azul, Verde, Laranja, Rosa, Roxo, Turquesa, Laranja escuro
+        let score = 0;
+        let bubbles = [];
+        let balls = [];
+        let holes = [];
+        let buttonAPressed = false;
+        let buttonBPressed = false;
+
+        // Atualiza o total de bolas no placar
+        totalBallsEl.textContent = NUM_BALLS;
+
+        // --- Funções do Timer ---
+        function startTimer() {
+            gameStartTime = Date.now();
+            gameActive = true;
+            timerInterval = setInterval(updateTimer, 100);
+        }
+
+        function stopTimer() {
+            gameActive = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimer() {
+            if (!gameActive || timerPaused) return;
+            const elapsed = Date.now() - gameStartTime;
+            const seconds = Math.floor(elapsed / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const mins = minutes % 60;
+            timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function getFormattedTime() {
+            const elapsed = Date.now() - gameStartTime;
+            const seconds = Math.floor(elapsed / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const mins = minutes % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // --- Funções do Sistema de Combo ---
+        function checkCombo() {
+            const now = Date.now();
+            const timeSinceLastScore = (now - lastScoreTime) / 1000; // em segundos
+
+            if (timeSinceLastScore < 2 && lastScoreTime > 0) {
+                // COMBO!
+                comboCount++;
+                showComboMessage(comboCount);
+            } else {
+                // Resetar combo
+                comboCount = 1;
+            }
+
+            lastScoreTime = now;
+
+            // Limpa o timeout anterior
+            if (comboTimeout) {
+                clearTimeout(comboTimeout);
+            }
+
+            // Reseta o combo depois de 2 segundos sem pontuar
+            comboTimeout = setTimeout(() => {
+                comboCount = 0;
+            }, 2000);
+        }
+
+        function showComboMessage(combo) {
+            const messages = {
+                2: '🔥 COMBO x2!',
+                3: '⚡ COMBO x3!',
+                4: '💥 INCRÍVEL x4!',
+                5: '🌟 FENOMENAL x5!'
+            };
+
+            let message = combo >= 5 ? '🌟 FENOMENAL x' + combo + '!' : (messages[combo] || '🔥 COMBO!');
+            
+            const comboText = comboDisplayEl.querySelector('.combo-message');
+            comboText.textContent = message;
+            
+            // Cores diferentes por nível de combo
+            const colors = {
+                2: 'text-orange-400',
+                3: 'text-yellow-300',
+                4: 'text-purple-400',
+                5: 'text-pink-400'
+            };
+            
+            comboText.className = 'combo-message text-6xl font-bold text-center drop-shadow-2xl ' + (colors[combo] || colors[5]);
+            
+            comboDisplayEl.classList.remove('hidden');
+            
+            // Esconde depois de 1.5 segundos
+            setTimeout(() => {
+                comboDisplayEl.classList.add('hidden');
+            }, 1500);
+            
+            // Vibração no combo
+            if ('vibrate' in navigator) {
+                navigator.vibrate([50, 100, 50]);
+            }
+        }
+
+        // Cria o motor de física
+        const engine = Engine.create();
+        const world = engine.world;
+
+        // Simulação da Água: gravidade fraca e resistência do ar
+        world.gravity.y = 0.5; // Gravidade um pouco maior para bolas caírem melhor
+
+        // Cria o renderizador (desativa o renderizador padrão do Matter.js)
+        // Nós vamos desenhar manualmente no loop 'afterRender' para adicionar bolhas
+        const render = Render.create({
+            element: canvasContainer,
+            engine: engine,
+            canvas: canvas,
+            options: {
+                width: W,
+                height: H,
+                wireframes: false, // Queremos formas sólidas, não aramadas
+                background: 'transparent' // O fundo vem do elemento HTML separado
+            }
+        });
+        
+        // Força o canvas a ser transparente
+        canvas.style.backgroundColor = 'transparent';
+
+        // --- 2. Criação dos Elementos do Jogo ---
+
+        function setupGame() {
+            // Limpa o mundo
+            World.clear(world);
+            balls = [];
+            holes = [];
+            score = 0;
+            comboCount = 0;
+            lastScoreTime = 0;
+            timerPaused = false;
+            pauseIcon.textContent = '⏸️';
+            updateScore();
+            winMessageEl.classList.add('hidden');
+            winMessageEl.classList.remove('flex');
+            
+            // Reseta o timer
+            stopTimer();
+            timerEl.textContent = '00:00';
+            
+            // Limpa peixe intrometido
+            if (intruderTimeout) {
+                clearTimeout(intruderTimeout);
+            }
+            intruderFish.classList.remove('active');
+            if (intruderBody) {
+                World.remove(world, intruderBody);
+                intruderBody = null;
+            }
+
+            // A. Criação das Paredes e Chão
+            const wallOptions = { 
+                isStatic: true, 
+                restitution: 0.4, // Um pouco de quique nas paredes
+                render: { visible: false } 
+            };
+            const ceilingOptions = { 
+                isStatic: true, 
+                restitution: 0.5, // Quique no teto para bolas ricochetearem
+                render: { fillStyle: 'rgba(30, 41, 59, 0.5)' } // Teto mais visível
+            };
+            
+            World.add(world, [
+                Bodies.rectangle(W / 2, H + 10, W, 20, wallOptions), // Chão
+                Bodies.rectangle(W / 2, -5, W, 30, ceilingOptions), // Teto sólido GROSSO
+                Bodies.rectangle(W / 2, -50, W, 80, wallOptions), // Barreira extra invisível no topo
+                Bodies.rectangle(-10, H / 2, 20, H, wallOptions), // Parede Esquerda
+                Bodies.rectangle(W + 10, H / 2, 20, H, wallOptions)  // Parede Direita
+            ]);
+
+            // B. Criação dos Buracos (na parte de cima)
+            const holeRadius = 22; // Diminuído de 28 para 22
+            const holeY = H * 0.25; // Posição Y dos buracos - movido mais para baixo para não tampar o timer
+            const holeSpacing = W * 0.25;
+
+            // Buraco 1 (Esquerda) - Visual
+            const hole1Visual = Bodies.circle(holeSpacing, holeY, holeRadius, {
+                isStatic: true,
+                isSensor: true, // Sensor para detectar quando bola entra
+                label: 'hole-visual',
+                render: { 
+                    fillStyle: '#000000',
+                    strokeStyle: '#1e293b',
+                    lineWidth: 5
+                }
+            });
+            
+            // Buraco 1 - Área de detecção (maior)
+            const hole1Sensor = Bodies.circle(holeSpacing, holeY, holeRadius + 3, {
+                isStatic: true,
+                isSensor: true,
+                label: 'hole-sensor',
+                render: { 
+                    visible: false
+                }
+            });
+            
+            // Buraco 2 (Direita) - Visual
+            const hole2Visual = Bodies.circle(W - holeSpacing, holeY, holeRadius, {
+                isStatic: true,
+                isSensor: true,
+                label: 'hole-visual',
+                render: { 
+                    fillStyle: '#000000',
+                    strokeStyle: '#1e293b',
+                    lineWidth: 5
+                }
+            });
+            
+            // Buraco 2 - Área de detecção (maior)
+            const hole2Sensor = Bodies.circle(W - holeSpacing, holeY, holeRadius + 3, {
+                isStatic: true,
+                isSensor: true,
+                label: 'hole-sensor',
+                render: { 
+                    visible: false
+                }
+            });
+
+            holes.push({ 
+                body: hole1Visual, 
+                sensor: hole1Sensor,
+                scoredBalls: 0,
+                x: holeSpacing,
+                y: holeY
+            });
+            holes.push({ 
+                body: hole2Visual, 
+                sensor: hole2Sensor,
+                scoredBalls: 0,
+                x: W - holeSpacing,
+                y: holeY
+            });
+            World.add(world, [hole1Visual, hole1Sensor, hole2Visual, hole2Sensor]);
+
+            // C. Criação das Bolas
+            const ballRadius = 16; // Diminuído de 18 para 16
+            
+            for (let i = 0; i < NUM_BALLS; i++) {
+                const x = Common.random(W * 0.1, W * 0.9);
+                const y = H - Common.random(30, 80);
+                
+                // Cria uma bola colorida
+                const ball = Bodies.circle(x, y, ballRadius, {
+                    label: 'ball',
+                    frictionAir: 0.08, // Menos resistência para mais movimento
+                    friction: 0.1, // Pouco atrito
+                    restitution: 0.7, // MUITO MAIS QUIQUE - como bola de sinuca!
+                    density: 0.0015, // Mais pesada para colisões melhores
+                    isScored: false,
+                    slop: 0.05, // Reduz a penetração entre objetos
+                    render: {
+                        fillStyle: BALL_COLORS[i % BALL_COLORS.length],
+                        strokeStyle: '#000',
+                        lineWidth: 2
+                    }
+                });
+                
+                balls.push(ball);
+            }
+            World.add(world, balls);
+        }
+
+        // --- 3. Lógica de Jogo e Física ---
+
+        // Função para aplicar o jato de ar
+        function jetAir(originX) {
+            const forceMagnitude = -0.025 * (W / 400); // Força média - cria movimento caótico
+            const jetRadius = W * 0.4; // Raio de alcance do jato
+            
+            balls.forEach(ball => {
+                if (ball.isScored) return; // Não mexe em bolas pontuadas
+                
+                const dist = Math.abs(ball.position.x - originX);
+                
+                if (dist < jetRadius) {
+                    // Quanto mais perto, mais forte o jato
+                    const forceScale = 1 - (dist / jetRadius);
+                    const force = {
+                        x: Common.random(-0.008, 0.008) * forceScale, // MAIS turbulência lateral
+                        y: forceMagnitude * forceScale
+                    };
+                    
+                    // Aplica a força
+                    Body.applyForce(ball, ball.position, force);
+                    
+                    // Adiciona um pequeno torque para girar as bolas
+                    Body.setAngularVelocity(ball, Common.random(-0.1, 0.1));
+                }
+            });
+            
+            // Gera bolhas visuais
+            spawnBubbles(originX);
+        }
+
+        // Função para criar bolhas
+        function spawnBubbles(x) {
+            const bubbleCount = Common.random(15, 25); // Mais bolhas
+            for (let i = 0; i < bubbleCount; i++) {
+                bubbles.push({
+                    x: x + Common.random(-20, 20),
+                    y: H - Common.random(10, 30),
+                    r: Common.random(1, 5),
+                    opacity: 1,
+                    speed: Common.random(2, 5) // Bolhas mais rápidas
+                });
+            }
+        }
+
+        // Função para atualizar e desenhar as bolhas (no canvas 2D)
+        function updateAndDrawBubbles(context) {
+            context.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            context.shadowColor = 'rgba(255, 255, 255, 1)';
+            context.shadowBlur = 10;
+            
+            for (let i = bubbles.length - 1; i >= 0; i--) {
+                const b = bubbles[i];
+                b.y -= b.speed;
+                b.x += Common.random(-0.5, 0.5); // Movimento lateral
+                b.opacity -= 0.01;
+                
+                if (b.opacity <= 0) {
+                    bubbles.splice(i, 1);
+                } else {
+                    context.globalAlpha = b.opacity;
+                    context.beginPath();
+                    context.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                    context.fill();
+                }
+            }
+            context.globalAlpha = 1; // Reseta o alpha
+            context.shadowBlur = 0;
+        }
+        
+        // Função de verificação de encaixe (chamada no loop de update)
+        function checkWinCondition() {
+            balls.forEach(ball => {
+                if (ball.isScored) return; // Já pontuou
+                
+                holes.forEach(hole => {
+                    // Calcula a distância entre a bola e o buraco
+                    const dx = ball.position.x - hole.x;
+                    const dy = ball.position.y - hole.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Verifica se a bola está dentro do buraco
+                    const isInHole = distance < 18; // Ajustado para o novo tamanho
+                    const speed = Math.sqrt(ball.velocity.x * ball.velocity.x + ball.velocity.y * ball.velocity.y);
+                    const isMovingSlow = speed < 3.0; // Velocidade total baixa
+                    
+                    if (isInHole && isMovingSlow) {
+                        // ACERTOU O BURACO!
+                        ball.isScored = true;
+                        
+                        // Anima a bola entrando no buraco
+                        animateBallIntoHole(ball, hole);
+                        
+                        hole.scoredBalls++;
+                        score++;
+                        updateScore();
+                        
+                        // Verifica combo
+                        checkCombo();
+                    }
+                });
+            });
+        }
+        
+        // Função para animar a bola caindo no buraco
+        function animateBallIntoHole(ball, hole) {
+            // Faz a bola encolher e desaparecer
+            let scale = 1;
+            const shrinkInterval = setInterval(() => {
+                scale -= 0.1;
+                
+                if (scale <= 0) {
+                    clearInterval(shrinkInterval);
+                    World.remove(world, ball);
+                } else {
+                    // Move a bola em direção ao centro do buraco
+                    Body.setPosition(ball, {
+                        x: ball.position.x + (hole.x - ball.position.x) * 0.2,
+                        y: ball.position.y + (hole.y - ball.position.y) * 0.2
+                    });
+                    
+                    // Reduz o tamanho visualmente através do circleRadius
+                    Body.scale(ball, 0.9, 0.9);
+                }
+            }, 30);
+        }
+        
+        function updateScore() {
+            scoreEl.textContent = score;
+            if (score >= NUM_BALLS) {
+                // Venceu!
+                stopTimer();
+                finalTimeEl.textContent = getFormattedTime();
+                winMessageEl.classList.remove('hidden');
+                winMessageEl.classList.add('flex');
+            }
+        }
+
+        // Função para iniciar o jogo
+        function startGame() {
+            setupGame();
+            startTimer();
+            scheduleIntruder(); // Inicia sistema do peixe
+        }
+        
+        // --- 4. Loop Principal do Jogo ---
+        
+        // Loop "antes" da física calcular (para aplicar forças)
+        Events.on(engine, 'beforeUpdate', (event) => {
+            // Limita a velocidade máxima das bolas
+            balls.forEach(ball => {
+                if (ball.isScored) return;
+                
+                const maxSpeed = 12; // Velocidade máxima aumentada para mais caos
+                const speed = Math.sqrt(ball.velocity.x * ball.velocity.x + ball.velocity.y * ball.velocity.y);
+                
+                if (speed > maxSpeed) {
+                    const scale = maxSpeed / speed;
+                    Body.setVelocity(ball, {
+                        x: ball.velocity.x * scale,
+                        y: ball.velocity.y * scale
+                    });
+                }
+            });
+            
+            // Aplica jatos de ar se botões estiverem pressionados
+            if (buttonAPressed) {
+                jetAir(W * 0.2); // Jato da esquerda
+            }
+            if (buttonBPressed) {
+                jetAir(W * 0.8); // Jato da direita
+            }
+            
+            // Verifica o encaixe
+            checkWinCondition();
+        });
+
+        // Loop "depois" da física renderizar (para desenhar bolhas)
+        Events.on(render, 'afterRender', () => {
+            // Desenha as bolhas por cima de tudo
+            updateAndDrawBubbles(ctx);
+        });
+
+        // --- 5. Controles (Mouse e Toque) ---
+        
+        function handleButtonPress(button, isPressed) {
+            if (button === 'A') {
+                buttonAPressed = isPressed;
+                if (isPressed) console.log('Botão A pressionado!');
+            }
+            if (button === 'B') {
+                buttonBPressed = isPressed;
+                if (isPressed) console.log('Botão B pressionado!');
+            }
+        }
+
+        // Eventos Botão A
+        btnA.addEventListener('mousedown', () => handleButtonPress('A', true));
+        btnA.addEventListener('mouseup', () => handleButtonPress('A', false));
+        btnA.addEventListener('mouseleave', () => handleButtonPress('A', false));
+        btnA.addEventListener('touchstart', (e) => { e.preventDefault(); handleButtonPress('A', true); }, { passive: false });
+        btnA.addEventListener('touchend', (e) => { e.preventDefault(); handleButtonPress('A', false); }, { passive: false });
+        
+        // Eventos Botão B
+        btnB.addEventListener('mousedown', () => handleButtonPress('B', true));
+        btnB.addEventListener('mouseup', () => handleButtonPress('B', false));
+        btnB.addEventListener('mouseleave', () => handleButtonPress('B', false));
+        btnB.addEventListener('touchstart', (e) => { e.preventDefault(); handleButtonPress('B', true); }, { passive: false });
+        btnB.addEventListener('touchend', (e) => { e.preventDefault(); handleButtonPress('B', false); }, { passive: false });
+
+        // Botão de Reset (da mensagem de vitória)
+        resetButton.addEventListener('click', () => {
+            startGame();
+        });
+        
+        // Botão de Reset sempre visível
+        resetGameButton.addEventListener('click', () => {
+            startGame();
+        });
+        
+        // Fallback da imagem de fundo
+        const backgroundElement = document.querySelector('.game-background');
+        const img = new Image();
+        img.src = 'https://i.imgur.com/NTpUOB0.jpeg';
+        img.onerror = () => {
+            backgroundElement.setAttribute('data-failed', 'true');
+        };
+        img.onload = () => {
+            console.log('Imagem de fundo carregada com sucesso!');
+        };
+
+        // --- 6. Instalação do PWA ---
+        
+        // Service Worker para funcionar offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    self.addEventListener('install', (e) => {
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('activate', (e) => {
+                        self.clients.claim();
+                    });
+                    
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            caches.match(e.request).then(response => response || fetch(e.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('PWA instalado com sucesso!'))
+                    .catch(() => console.log('Falha ao instalar PWA'));
+            });
+        }
+        
+        // Previne comportamento padrão de gestos
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
+        
+        // Previne scroll bounce no iOS
+        let lastTouchY = 0;
+        document.addEventListener('touchstart', (e) => {
+            lastTouchY = e.touches[0].clientY;
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', (e) => {
+            const touchY = e.touches[0].clientY;
+            const touchYDelta = touchY - lastTouchY;
+            lastTouchY = touchY;
+            
+            // Previne scroll se tentar scrollar no body
+            if (e.target === document.body) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Oculta a barra de endereço no scroll (mobile)
+        window.scrollTo(0, 1);
+        
+        // --- 7. Inicia o Jogo Automaticamente ---
+        setupGame();
+        startTimer(); // Inicia o cronômetro automaticamente
+        Runner.run(engine); // Inicia o motor de física
+        Render.run(render); // Inicia o renderizador
+        
+        // Feedback háptico nos botões (se disponível)
+        function hapticFeedback() {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(10);
+            }
+        }
+        
+        // Adiciona feedback háptico aos botões
+        btnA.addEventListener('touchstart', hapticFeedback);
+        btnB.addEventListener('touchstart', hapticFeedback);
+    </script>
+</body>
+</html>

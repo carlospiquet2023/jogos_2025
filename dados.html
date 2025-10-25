@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolinhas Mágicas</title>
+    <!-- Importa a fonte 'Inter' para um visual moderno -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet">
+    
+    <!-- Importa a biblioteca Tone.js para gerar sons no navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        /* CSS Reset e Configuração Geral */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            /* Impede o scroll e o zoom por toque, comum em bebês */
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Área do Jogo (o corpo inteiro) */
+        body {
+            /* Fundo escuro para destacar as cores */
+            background-color: #1a1a2e;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        /* Título de instrução simples */
+        h1 {
+            margin-top: 30px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            /* Evita que o texto seja selecionado ao tocar */
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE */
+        }
+
+        /* Estilo da Bolha */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            
+            /* Centraliza a bolha no ponto do toque */
+            transform: translate(-50%, -50%);
+            
+            /* Animação 'pop' */
+            animation: pop 0.8s ease-out forwards;
+            
+            /* Garante que a bolha não intercepte outros toques */
+            pointer-events: none;
+
+            /* Adiciona um brilho sutil */
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Animação da Bolha */
+        @keyframes pop {
+            0% {
+                /* Começa pequena e totalmente visível */
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            100% {
+                /* Termina grande e transparente */
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Toque na tela!</h1>
+
+    <script>
+        // --- Configuração do Jogo ---
+
+        // 1. Configuração de Áudio
+        // Cria um sintetizador simples para tocar notas
+        const synth = new Tone.Synth().toDestination();
+        
+        // Notas musicais que podem ser tocadas (uma escala pentatônica, que soa bem)
+        const notes = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5'];
+        
+        // Flag para garantir que o áudio seja iniciado pelo usuário (exigência do navegador)
+        let audioStarted = false;
+
+        // 2. Configuração de Cores
+        // Paleta de cores vibrantes e amigáveis
+        const colors = [
+            '#FF6B6B', // Vermelho
+            '#4ECDC4', // Verde-água
+            '#45B7D1', // Azul
+            '#FED766', // Amarelo
+            '#F0E68C', // Amarelo claro
+            '#98D8C8', // Verde claro
+            '#F7B7A3'  // Laranja claro
+        ];
+
+        // --- Funções do Jogo ---
+
+        /**
+         * Retorna uma cor aleatória da nossa paleta.
+         */
+        function getRandomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        /**
+         * Retorna uma nota aleatória da nossa lista.
+         */
+        function getRandomNote() {
+            return notes[Math.floor(Math.random() * notes.length)];
+        }
+
+        /**
+         * Função principal: chamada quando o usuário toca ou clica.
+         * Cria uma bolha na posição (x, y).
+         */
+        async function createBubble(x, y) {
+            
+            // 1. Inicia o contexto de áudio no primeiro toque
+            if (!audioStarted) {
+                await Tone.start();
+                audioStarted = true;
+                console.log('Contexto de áudio iniciado.');
+            }
+
+            // 2. Cria o elemento da bolha
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            // 3. Define posição, cor e tamanho aleatórios
+            bubble.style.left = `${x}px`;
+            bubble.style.top = `${y}px`;
+            bubble.style.backgroundColor = getRandomColor();
+            
+            // Tamanho aleatório entre 40px e 120px
+            const size = Math.random() * 80 + 40;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+
+            // 4. Adiciona a bolha na tela
+            document.body.appendChild(bubble);
+
+            // 5. Toca um som
+            // '8n' = duração da nota (uma colcheia)
+            synth.triggerAttackRelease(getRandomNote(), '8n');
+
+            // 6. Limpeza: remove a bolha após a animação terminar
+            // Isso é muito importante para não sobrecarregar o navegador
+            bubble.addEventListener('animationend', () => {
+                bubble.remove();
+            });
+        }
+
+        // --- Event Listeners (Ouvintes de Evento) ---
+
+        /**
+         * Ouve por cliques do mouse (para computadores).
+         */
+        document.body.addEventListener('click', (event) => {
+            createBubble(event.pageX, event.pageY);
+        });
+
+        /**
+         * Ouve por toques na tela (para celulares e tablets).
+         */
+        document.body.addEventListener('touchstart', (event) => {
+            // Previne o comportamento padrão do navegador (como dar zoom)
+            event.preventDefault();
+            
+            // Permite múltiplos toques (bebês costumam usar a mão inteira)
+            // Cria uma bolha para cada dedo que tocou na tela
+            for (const touch of event.changedTouches) {
+                createBubble(touch.pageX, touch.pageY);
+            }
+        }, { passive: false }); // 'passive: false' é necessário para o preventDefault()
+
+    </script>
+</body>
+</html>
+

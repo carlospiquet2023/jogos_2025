@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f301e">
+    <title>Roleta Europeia - Casino Royale</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fonte personalizada para uma aparência de cassino */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap');
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #0a2818 0%, #0f301e 50%, #0a2818 100%);
+            color: #f0f0f0;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -moz-user-select: none;
+        }
+        
+        /* Safe area para notch de iPhone */
+        @supports(padding: max(0px)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+        
+        /* Animações Vegas Style */
+        @keyframes neon-pulse {
+            0%, 100% { 
+                text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 30px #ff6b00;
+                opacity: 1;
+            }
+            50% { 
+                text-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700, 0 0 15px #ff6b00;
+                opacity: 0.8;
+            }
+        }
+        
+        @keyframes spin-glow {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.5),
+                            inset 0 0 30px rgba(255, 215, 0, 0.2);
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(255, 215, 0, 0.8),
+                            inset 0 0 50px rgba(255, 215, 0, 0.4);
+            }
+        }
+        
+        @keyframes chip-rain {
+            0% { transform: translateY(-100px) rotate(0deg) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(400px) rotate(720deg) scale(1); opacity: 0; }
+        }
+        
+        @keyframes winner-flash {
+            0%, 100% { 
+                background-color: rgba(255, 215, 0, 0.3);
+                transform: scale(1);
+            }
+            50% { 
+                background-color: rgba(255, 215, 0, 0.7);
+                transform: scale(1.1);
+            }
+        }
+        
+        .neon-title {
+            animation: neon-pulse 2s ease-in-out infinite;
+        }
+        
+        .chip-animation {
+            animation: chip-rain 2.5s ease-in-out forwards;
+        }
+        
+        .winner-cell {
+            animation: winner-flash 1s ease-in-out infinite;
+        }
+
+        .casino-title {
+            font-family: 'Playfair Display', serif;
+            color: #f3c957;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8), 0 0 20px #ffd700;
+        }
+        
+        /* Moldura dourada luxuosa */
+        .gold-frame {
+            background: linear-gradient(135deg, 
+                #d4af37 0%, 
+                #f4e5a0 25%, 
+                #d4af37 50%, 
+                #c5a028 75%, 
+                #d4af37 100%);
+            border: 4px solid #8B6914;
+            box-shadow: 
+                0 0 40px rgba(212, 175, 55, 0.6),
+                inset 0 0 30px rgba(255,255,255,0.3),
+                inset 0 0 60px rgba(0,0,0,0.3);
+        }
+        
+        /* Mesa de feltro verde realista */
+        .felt-table {
+            background: radial-gradient(ellipse at center, #1a5334 0%, #0d2d1a 100%);
+            box-shadow: 
+                inset 0 0 100px rgba(0,0,0,0.6),
+                0 0 50px rgba(0,0,0,0.9);
+        }
+        
+        /* Display LED */
+        .led-display {
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+            border: 3px solid #333;
+            box-shadow: 
+                inset 0 0 30px rgba(255, 0, 0, 0.3),
+                0 0 20px rgba(0, 0, 0, 0.5);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        
+        /* Estilo da mesa de apostas */
+        .betting-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+            max-width: 320px;
+            margin: auto;
+        }
+        
+        @media (max-width: 640px) {
+            .betting-grid {
+                gap: 2px;
+                max-width: 290px;
+            }
+        }
+
+        .bet-cell, .zero-cell, .side-bet {
+            padding: 10px 8px;
+            font-weight: 900;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #f3c957;
+            box-shadow: 
+                0 6px 12px rgba(0,0,0,0.5),
+                inset 0 2px 5px rgba(255,255,255,0.3);
+            font-size: 1rem;
+            touch-action: manipulation;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+        
+        @media (min-width: 640px) {
+            .bet-cell, .zero-cell, .side-bet {
+                padding: 14px 10px;
+                border-radius: 10px;
+                min-height: 55px;
+                font-size: 1.125rem;
+                border: 4px solid #f3c957;
+            }
+        }
+
+        .bet-cell:hover, .zero-cell:hover, .side-bet:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 12px 20px rgba(0,0,0,0.6),
+                0 0 25px rgba(243, 201, 87, 0.5),
+                inset 0 2px 8px rgba(255,255,255,0.4);
+        }
+
+        .number-red { 
+            background: linear-gradient(145deg, #dc2626, #991b1b);
+            border-color: #fca5a5;
+        }
+        .number-black { 
+            background: linear-gradient(145deg, #374151, #1f2937);
+            border-color: #9ca3af;
+        }
+        .number-green { 
+            background: linear-gradient(145deg, #16a34a, #15803d);
+            border-color: #86efac;
+        }
+
+        .zero-cell { 
+            grid-column: span 3;
+            font-size: 1.5rem;
+        }
+        
+        .side-bet { 
+            grid-column: span 1;
+            background: linear-gradient(145deg, #2563eb, #1e40af);
+            border-color: #93c5fd;
+            font-size: 0.875rem;
+        }
+        
+        @media (min-width: 640px) {
+            .side-bet {
+                font-size: 1rem;
+            }
+        }
+        
+        .side-bet.red { 
+            background: linear-gradient(145deg, #dc2626, #991b1b);
+            border-color: #fca5a5;
+        }
+        .side-bet.black { 
+            background: linear-gradient(145deg, #374151, #1f2937);
+            border-color: #9ca3af;
+        }
+
+        /* Ficha de aposta 3D */
+        .chip-value {
+            position: absolute;
+            bottom: -12px;
+            right: -12px;
+            background: radial-gradient(circle at 30% 30%, #ffd700, #f3c957, #c5a028);
+            color: #1f2937;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            border: 3px solid white;
+            box-shadow: 
+                0 4px 8px rgba(0,0,0,0.6),
+                inset 0 2px 4px rgba(255,255,255,0.5),
+                inset 0 -2px 4px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        @media (min-width: 640px) {
+            .chip-value {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+        }
+
+        /* Botões de ficha realistas */
+        .chip-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            font-weight: 900;
+            color: white;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            font-size: 0.875rem;
+            touch-action: manipulation;
+            box-shadow: 
+                0 6px 12px rgba(0,0,0,0.5),
+                inset 0 3px 8px rgba(255,255,255,0.3),
+                inset 0 -3px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        .chip-btn::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 30%;
+            height: 30%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4), transparent);
+            border-radius: 50%;
+        }
+        
+        @media (min-width: 640px) {
+            .chip-btn {
+                width: 65px;
+                height: 65px;
+                border: 4px solid white;
+                font-size: 1rem;
+            }
+        }
+        
+        .chip-btn:hover {
+            transform: scale(1.15) translateY(-3px);
+            box-shadow: 
+                0 10px 20px rgba(0,0,0,0.7),
+                0 0 30px rgba(255, 215, 0, 0.5),
+                inset 0 3px 8px rgba(255,255,255,0.4);
+        }
+        
+        .chip-btn.selected {
+            border-color: #ffd700;
+            box-shadow: 
+                0 0 25px #ffd700,
+                0 0 50px #ffd700,
+                inset 0 3px 8px rgba(255,255,255,0.4);
+            transform: scale(1.1);
+        }
+
+        /* Botão de girar com efeito dourado */
+        #spinButton {
+            background: linear-gradient(145deg, #ffd700, #ffed4e, #b8860b);
+            border: 4px solid #8B6914;
+            color: #1a5334;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+            font-weight: 900;
+            box-shadow: 
+                0 10px 0 #6B5010,
+                0 15px 30px rgba(0,0,0,0.6),
+                inset 0 3px 10px rgba(255,255,255,0.5);
+            transition: all 0.2s ease;
+        }
+        
+        #spinButton:active:not(:disabled) {
+            transform: translateY(8px);
+            box-shadow: 
+                0 2px 0 #6B5010,
+                0 5px 15px rgba(0,0,0,0.6),
+                inset 0 3px 10px rgba(0,0,0,0.3);
+        }
+        
+        #spinButton:disabled {
+            background: linear-gradient(145deg, #9ca3af, #6b7280);
+            color: #4b5563;
+            cursor: not-allowed;
+            box-shadow: 
+                0 6px 0 #4b5563,
+                0 10px 20px rgba(0,0,0,0.4);
+        }
+        
+        /* Botão limpar apostas */
+        #clearBetsButton {
+            background: linear-gradient(145deg, #dc2626, #991b1b, #7f1d1d);
+            border: 4px solid #450a0a;
+            box-shadow: 
+                0 8px 0 #450a0a,
+                0 12px 25px rgba(0,0,0,0.6),
+                inset 0 2px 8px rgba(255,255,255,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        #clearBetsButton:active {
+            transform: translateY(6px);
+            box-shadow: 
+                0 2px 0 #450a0a,
+                0 4px 10px rgba(0,0,0,0.6);
+        }
+
+        /* Canvas da roleta com brilho */
+        canvas {
+            border-radius: 50%;
+            box-shadow: 
+                0 0 40px rgba(255, 215, 0, 0.4),
+                0 0 80px rgba(0,0,0,0.8),
+                inset 0 0 30px rgba(0,0,0,0.5);
+            background-color: #061a10;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        canvas.spinning {
+            animation: spin-glow 0.5s ease-in-out infinite;
+        }
+        
+        /* Previne zoom em iOS */
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+        
+        /* Container de fichas caindo */
+        #chip-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <!-- Container para animação de fichas caindo -->
+    <div id="chip-container"></div>
+
+    <h1 class="casino-title neon-title text-4xl sm:text-6xl font-bold mb-6 text-center">🎰 ROLETA EUROPEIA 🎰</h1>
+
+    <div class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-4 sm:gap-8 items-start justify-center px-2 sm:px-0">
+
+        <!-- Seção da Roleta -->
+        <div class="w-full lg:w-1/2 flex flex-col items-center gold-frame felt-table p-4 sm:p-6 rounded-2xl shadow-xl">
+            <h2 class="text-2xl sm:text-4xl font-semibold mb-4 sm:mb-6 casino-title neon-title">♠️ A ROLETA ♠️</h2>
+            
+            <!-- Canvas para desenhar a roleta -->
+            <canvas id="rouletteCanvas" width="300" height="300" class="mb-4 sm:mb-6 w-full max-w-xs sm:max-w-sm"></canvas>
+            
+            <button id="spinButton" class="w-full py-3 sm:py-4 px-6 sm:px-8 text-xl sm:text-2xl font-bold rounded-xl shadow-lg transition duration-200 ease-in-out hover:opacity-90 disabled:opacity-50 uppercase">
+                🎡 GIRAR 🎡
+            </button>
+            
+            <div class="mt-4 sm:mt-6 text-center w-full">
+                <p class="text-base sm:text-xl mb-2 font-bold uppercase tracking-wide" style="color: #ffd700;">Número Sorteado:</p>
+                <div class="led-display rounded-xl p-4 sm:p-6">
+                    <div id="resultDisplay" class="text-5xl sm:text-7xl font-bold h-16 sm:h-20 flex items-center justify-center casino-title">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Apostas -->
+        <div class="w-full lg:w-1/2 flex flex-col items-center gold-frame felt-table p-4 sm:p-6 rounded-2xl shadow-xl">
+            <h2 class="text-2xl sm:text-4xl font-semibold mb-4 sm:mb-6 casino-title neon-title">♦️ FAÇA SUA APOSTA ♦️</h2>
+
+            <!-- Saldo e Mensagens -->
+            <div class="w-full text-center mb-4 sm:mb-6 led-display p-3 sm:p-4 rounded-xl">
+                <p class="text-xl sm:text-3xl font-semibold" style="color: #00ff00; text-shadow: 0 0 15px #00ff00;">
+                    💰 SALDO: R$ <span id="balanceDisplay">1000</span> 💰
+                </p>
+                <p id="messageDisplay" class="text-base sm:text-xl h-6 sm:h-8 mt-2 font-semibold"></p>
+            </div>
+
+            <!-- Seleção de Fichas -->
+            <div class="mb-4 sm:mb-6">
+                <p class="text-center font-bold mb-3 text-base sm:text-lg uppercase tracking-wide" style="color: #ffd700;">Valor da Ficha:</p>
+                <div id="chipSelection" class="flex gap-2 sm:gap-4 justify-center flex-wrap">
+                    <button class="chip-btn" style="background: radial-gradient(circle at 30% 30%, #3b82f6, #1e40af, #1e3a8a);" data-value="5">R$5</button>
+                    <button class="chip-btn selected" style="background: radial-gradient(circle at 30% 30%, #ef4444, #dc2626, #991b1b);" data-value="10">R$10</button>
+                    <button class="chip-btn" style="background: radial-gradient(circle at 30% 30%, #6b7280, #374151, #1f2937);" data-value="50">R$50</button>
+                    <button class="chip-btn" style="background: radial-gradient(circle at 30% 30%, #8b5cf6, #7c3aed, #6d28d9);" data-value="100">R$100</button>
+                </div>
+            </div>
+
+            <!-- Mesa de Apostas -->
+            <div id="bettingTable" class="w-full max-w-md">
+                <!-- O 0 (Zero) -->
+                <div class="bet-cell number-green zero-cell" data-bet="0">
+                    0
+                    <span class="chip-value" style="display: none;">0</span>
+                </div>
+                
+                <!-- Números 1-36 -->
+                <div class="betting-grid mt-1">
+                    <!-- Gerado por JavaScript -->
+                </div>
+                
+                <!-- Apostas Laterais -->
+                <div class="grid grid-cols-3 gap-1 mt-1">
+                    <div class="side-bet" data-bet="1-18">1-18</div>
+                    <div class="side-bet" data-bet="even">Par</div>
+                    <div class="side-bet red" data-bet="red">Vermelho</div>
+                    <div class="side-bet black" data-bet="black">Preto</div>
+                    <div class="side-bet" data-bet="odd">Ímpar</div>
+                    <div class="side-bet" data-bet="19-36">19-36</div>
+                </div>
+            </div>
+            
+            <button id="clearBetsButton" class="w-full max-w-md mt-6 py-3 px-8 text-white text-lg sm:text-xl font-bold rounded-xl shadow-lg transition duration-200 ease-in-out uppercase">
+                🗑️ LIMPAR APOSTAS 🗑️
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('rouletteCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spinButton');
+        const clearBetsButton = document.getElementById('clearBetsButton');
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const bettingTable = document.getElementById('bettingTable');
+        const chipSelection = document.getElementById('chipSelection');
+        const chipContainer = document.getElementById('chip-container');
+        
+        // Definições da Roleta
+        // Usei sequência simples 0..36 para que os números sejam desenhados em ordem crescente
+        const numbers = [
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36
+        ];
+        const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+        const numSegments = numbers.length;
+        const segmentAngle = (2 * Math.PI) / numSegments;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = canvas.width / 2 - 15;
+
+        // Estado do Jogo
+        let balance = 1000;
+        let currentChipValue = 10;
+        let currentBets = {}; // Ex: { '5': 10, 'red': 50 }
+        let spinning = false;
+    // Alinha o centro do segmento 0 para o topo (12h) ao iniciar
+    let currentAngle = -segmentAngle / 2 - Math.PI / 2;
+    let lastWinningNumber = null;
+    // Distância da bolinha ao centro (fixa durante o giro para determinismo)
+    let ballDistance = radius - (radius / 3) - (radius / 3);
+        
+        // Função para criar animação de fichas caindo
+        function createChipRain() {
+            for (let i = 0; i < 25; i++) {
+                setTimeout(() => {
+                    const chip = document.createElement('div');
+                    const colors = [
+                        'radial-gradient(circle at 30% 30%, #ffd700, #f3c957, #c5a028)',
+                        'radial-gradient(circle at 30% 30%, #ef4444, #dc2626, #991b1b)',
+                        'radial-gradient(circle at 30% 30%, #3b82f6, #1e40af, #1e3a8a)'
+                    ];
+                    chip.style.cssText = `
+                        position: absolute;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        border: 3px solid white;
+                        left: ${Math.random() * 100}%;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.5);
+                    `;
+                    chip.className = 'chip-animation';
+                    chipContainer.appendChild(chip);
+                    
+                    setTimeout(() => chip.remove(), 2500);
+                }, i * 80);
+            }
+        }
+        
+        // Função para destacar células vencedoras
+        function highlightWinningBets(winningNumber) {
+            const isRed = redNumbers.includes(winningNumber);
+            const isBlack = winningNumber !== 0 && !isRed;
+            const isEven = winningNumber !== 0 && winningNumber % 2 === 0;
+            const isOdd = winningNumber !== 0 && winningNumber % 2 !== 0;
+            const isLow = winningNumber >= 1 && winningNumber <= 18;
+            const isHigh = winningNumber >= 19 && winningNumber <= 36;
+
+            const cells = bettingTable.querySelectorAll('[data-bet]');
+            cells.forEach(cell => {
+                const betType = cell.dataset.bet;
+                let isWinner = false;
+
+                if (betType === winningNumber.toString()) isWinner = true;
+                else if (betType === 'red' && isRed) isWinner = true;
+                else if (betType === 'black' && isBlack) isWinner = true;
+                else if (betType === 'even' && isEven) isWinner = true;
+                else if (betType === 'odd' && isOdd) isWinner = true;
+                else if (betType === '1-18' && isLow) isWinner = true;
+                else if (betType === '19-36' && isHigh) isWinner = true;
+
+                if (isWinner && currentBets[betType]) {
+                    cell.classList.add('winner-cell');
+                } else {
+                    cell.classList.remove('winner-cell');
+                }
+            });
+
+            setTimeout(() => {
+                cells.forEach(cell => cell.classList.remove('winner-cell'));
+            }, 3000);
+        }
+        
+        // --- Funções de Desenho da Roleta ---
+
+        function drawRouletteWheel(rotation = 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Círculo externo dourado
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius + 10, 0, 2 * Math.PI);
+            ctx.fillStyle = '#d4af37';
+            ctx.fill();
+            ctx.strokeStyle = '#8B6914';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Desenha os segmentos
+            for (let i = 0; i < numSegments; i++) {
+                const angle = rotation + i * segmentAngle;
+                const number = numbers[i];
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + segmentAngle);
+                ctx.closePath();
+
+                // Define a cor com gradiente
+                if (number === 0) {
+                    const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                    grad.addColorStop(0, '#22c55e');
+                    grad.addColorStop(1, '#15803d');
+                    ctx.fillStyle = grad;
+                } else if (redNumbers.includes(number)) {
+                    const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                    grad.addColorStop(0, '#ef4444');
+                    grad.addColorStop(1, '#991b1b');
+                    ctx.fillStyle = grad;
+                } else {
+                    const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                    grad.addColorStop(0, '#4b5563');
+                    grad.addColorStop(1, '#1f2937');
+                    ctx.fillStyle = grad;
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Desenha os números com sombra
+                ctx.save();
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 16px Roboto';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                const textAngle = angle + segmentAngle / 2;
+                const textX = centerX + (radius - 25) * Math.cos(textAngle);
+                const textY = centerY + (radius - 25) * Math.sin(textAngle);
+                ctx.translate(textX, textY);
+                ctx.rotate(textAngle + Math.PI / 2);
+                ctx.fillText(number, 0, 0);
+                ctx.restore();
+            }
+
+            // Círculo central com gradiente dourado
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius / 3.5, 0, 2 * Math.PI);
+            const centralGrad = ctx.createRadialGradient(centerX - 10, centerY - 10, 0, centerX, centerY, radius / 3.5);
+            centralGrad.addColorStop(0, '#ffd700');
+            centralGrad.addColorStop(0.5, '#d4af37');
+            centralGrad.addColorStop(1, '#8B6914');
+            ctx.fillStyle = centralGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#6B5010';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Logo central
+            ctx.fillStyle = '#1f2937';
+            ctx.font = 'bold 20px Playfair Display';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+            ctx.shadowBlur = 8;
+            ctx.fillText('💎', centerX, centerY);
+            
+            // Desenha o ponteiro/marcador no topo (12h)
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(-Math.PI / 2); // Aponta para a direita (3h) que será o nosso referencial
+            
+            // Seta triangular
+            ctx.beginPath();
+            ctx.moveTo(radius + 5, 0);
+            ctx.lineTo(radius + 20, -15);
+            ctx.lineTo(radius + 20, 15);
+            ctx.closePath();
+            
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+            ctx.strokeStyle = '#8B6914';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        // Desenha a bolinha
+        function drawBall(ballAngle) {
+            const ballRadius = 7;
+            const ballDist = ballDistance; // usa distância fixa
+            const ballX = centerX + ballDist * Math.cos(ballAngle);
+            const ballY = centerY + ballDist * Math.sin(ballAngle);
+
+            // Sombra da bolinha
+            ctx.beginPath();
+            ctx.arc(ballX + 2, ballY + 2, ballRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fill();
+
+            // Bolinha com gradiente 3D
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
+            const ballGrad = ctx.createRadialGradient(ballX - 2, ballY - 2, 0, ballX, ballY, ballRadius);
+            ballGrad.addColorStop(0, 'white');
+            ballGrad.addColorStop(0.4, '#f0f0f0');
+            ballGrad.addColorStop(1, '#b0b0b0');
+            ctx.fillStyle = ballGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#808080';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+    }
+
+        // --- Funções de Lógica do Jogo ---
+
+        function spinWheel() {
+            if (spinning) return;
+            if (Object.keys(currentBets).length === 0) {
+                showMessage("⚠️ FAÇA UMA APOSTA ANTES DE GIRAR! ⚠️", 'text-red-400');
+                return;
+            }
+
+            spinning = true;
+            spinButton.disabled = true;
+            clearBetsButton.disabled = true;
+            resultDisplay.textContent = '-';
+            resultDisplay.className = 'text-5xl sm:text-7xl font-bold h-16 sm:h-20 flex items-center justify-center casino-title';
+            showMessage('🎡 A ROLETA ESTÁ GIRANDO... 🎡', 'text-yellow-300');
+            
+            // Adiciona efeito de brilho ao canvas
+            canvas.classList.add('spinning');
+
+            let spinSpeed = 0.5;
+            let deceleration = 0.0008; // Desaceleração ajustada para parar em ~15s
+            let startTime = null;
+            let ballAngle = Math.random() * 2 * Math.PI;
+            const maxDuration = 15000; // Máximo de 15 segundos
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                
+                const elapsed = timestamp - startTime;
+                
+                // Garante que para após 15 segundos
+                if (elapsed >= maxDuration) {
+                    spinSpeed = 0;
+                }
+                
+                if (spinSpeed > 0) {
+                    currentAngle += spinSpeed;
+                    ballAngle -= spinSpeed * 0.8;
+                    spinSpeed = Math.max(0, spinSpeed - deceleration);
+
+                    drawRouletteWheel(currentAngle);
+                    drawBall(ballAngle);
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.classList.remove('spinning');
+                    endSpin(ballAngle);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function endSpin(finalBallAngle) {
+            // Determina o segmento vencedor usando a posição final da bolinha (mais preciso)
+            // Normaliza ângulos para [0, 2PI)
+            const normalizedWheelAngle = ((currentAngle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+            const normalizedBallAngle = ((finalBallAngle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+
+            // Calcula o ângulo da bolinha relativo à roda (em coordenadas da roda)
+            // Se um segmento i cobre [wheelAngle + i*segmentAngle, wheelAngle + (i+1)*segmentAngle)
+            // então o índice do segmento onde a bolinha está é:
+            const relativeAngle = (normalizedBallAngle - normalizedWheelAngle + 2 * Math.PI) % (2 * Math.PI);
+            let winningIndex = Math.floor(relativeAngle / segmentAngle) % numSegments;
+
+            // Segurança: garantir índice válido
+            if (winningIndex < 0) winningIndex += numSegments;
+
+            const winningNumber = numbers[winningIndex];
+            lastWinningNumber = winningNumber;
+
+            // Redesenha a roda parada com a bolinha no lugar certo
+            drawRouletteWheel(currentAngle);
+            drawBall(finalBallAngle);
+
+            calculateWinnings(winningNumber);
+        }
+
+        function calculateWinnings(number) {
+            let totalWinnings = 0;
+            let totalBetAmount = 0;
+            const isRed = redNumbers.includes(number);
+            const isBlack = number !== 0 && !isRed;
+            const isEven = number !== 0 && number % 2 === 0;
+            const isOdd = number !== 0 && number % 2 !== 0;
+            const isLow = number >= 1 && number <= 18;
+            const isHigh = number >= 19 && number <= 36;
+
+            for (const betType in currentBets) {
+                const betAmount = currentBets[betType];
+                totalBetAmount += betAmount;
+                let won = false;
+                let payoutRatio = 0;
+
+                if (betType === number.toString()) {
+                    won = true;
+                    payoutRatio = 35;
+                } else if (betType === 'red' && isRed) {
+                    won = true;
+                    payoutRatio = 1;
+                } else if (betType === 'black' && isBlack) {
+                    won = true;
+                    payoutRatio = 1;
+                } else if (betType === 'even' && isEven) {
+                    won = true;
+                    payoutRatio = 1;
+                } else if (betType === 'odd' && isOdd) {
+                    won = true;
+                    payoutRatio = 1;
+                } else if (betType === '1-18' && isLow) {
+                    won = true;
+                    payoutRatio = 1;
+                } else if (betType === '19-36' && isHigh) {
+                    won = true;
+                    payoutRatio = 1;
+                }
+
+                if (won) {
+                    const winnings = betAmount * payoutRatio;
+                    totalWinnings += winnings + betAmount;
+                }
+            }
+
+            balance += totalWinnings;
+            
+            // Exibe o resultado
+            displayResult(number, isRed, isBlack);
+            
+            // Destaca as apostas vencedoras
+            highlightWinningBets(number);
+
+            if (totalWinnings > 0) {
+                createChipRain();
+                showMessage(`🎉 VOCÊ GANHOU R$ ${totalWinnings}! PARABÉNS! 🎉`, 'text-green-400');
+            } else {
+                showMessage(`💔 VOCÊ PERDEU R$ ${totalBetAmount}! TENTE NOVAMENTE! 💔`, 'text-red-400');
+            }
+
+            updateBalance();
+            clearBets();
+            spinning = false;
+            spinButton.disabled = false;
+            clearBetsButton.disabled = false;
+        }
+
+        function displayResult(number, isRed, isBlack) {
+            resultDisplay.textContent = number;
+            let colorClass = 'casino-title ';
+            let shadowColor = '';
+            
+            if (number === 0) {
+                colorClass += 'text-green-400';
+                shadowColor = '0 0 25px #22c55e, 0 0 50px #22c55e';
+            } else if (isRed) {
+                colorClass += 'text-red-500';
+                shadowColor = '0 0 25px #ef4444, 0 0 50px #ef4444';
+            } else if (isBlack) {
+                colorClass += 'text-gray-300';
+                shadowColor = '0 0 25px #9ca3af, 0 0 50px #9ca3af';
+            }
+            
+            resultDisplay.className = 'text-5xl sm:text-7xl font-bold h-16 sm:h-20 flex items-center justify-center ' + colorClass;
+            resultDisplay.style.textShadow = shadowColor;
+        }
+
+        function updateBalance() {
+            balanceDisplay.textContent = balance;
+        }
+
+        function showMessage(msg, colorClass = 'text-yellow-300') {
+            messageDisplay.textContent = msg;
+            let shadowColor = '0 0 10px currentColor';
+            
+            if (colorClass.includes('green')) {
+                shadowColor = '0 0 15px #22c55e';
+            } else if (colorClass.includes('red')) {
+                shadowColor = '0 0 15px #ef4444';
+            } else if (colorClass.includes('yellow')) {
+                shadowColor = '0 0 15px #ffd700';
+            }
+            
+            messageDisplay.className = 'text-base sm:text-xl h-6 sm:h-8 mt-2 font-semibold uppercase ' + colorClass;
+            messageDisplay.style.textShadow = shadowColor;
+        }
+
+        function placeBet(betType) {
+            if (spinning) {
+                showMessage("⏸️ AGUARDE A ROLETA PARAR! ⏸️", 'text-red-400');
+                return;
+            }
+
+            if (balance < currentChipValue) {
+                showMessage("❌ SALDO INSUFICIENTE! ❌", 'text-red-400');
+                return;
+            }
+
+            balance -= currentChipValue;
+            currentBets[betType] = (currentBets[betType] || 0) + currentChipValue;
+            
+            updateBalance();
+            updateBettingTableUI();
+            showMessage(`✅ APOSTA DE R$ ${currentChipValue} EM ${betType.toUpperCase()} REALIZADA! ✅`, 'text-green-400');
+        }
+
+        function clearBets() {
+            // Devolve o valor das apostas ao saldo se o giro não começou
+            if (!spinning) {
+                for (const betType in currentBets) {
+                    balance += currentBets[betType];
+                }
+                showMessage("🗑️ APOSTAS LIMPAS! FAÇA NOVAS APOSTAS! 🗑️", 'text-yellow-300');
+            }
+            currentBets = {};
+            updateBalance();
+            updateBettingTableUI();
+        }
+
+        function updateBettingTableUI() {
+            const cells = bettingTable.querySelectorAll('[data-bet]');
+            cells.forEach(cell => {
+                const betType = cell.dataset.bet;
+                const betAmount = currentBets[betType];
+                const chipDisplay = cell.querySelector('.chip-value');
+
+                if (betAmount) {
+                    if (chipDisplay) {
+                        // Para números
+                        chipDisplay.textContent = betAmount;
+                        chipDisplay.style.display = 'flex';
+                    } else {
+                        // Para apostas laterais (adiciona se não existir)
+                        const newChipDisplay = document.createElement('span');
+                        newChipDisplay.className = 'chip-value';
+                        newChipDisplay.textContent = betAmount;
+                        newChipDisplay.style.display = 'flex';
+                        cell.appendChild(newChipDisplay);
+                    }
+                } else {
+                    if (chipDisplay) {
+                        chipDisplay.style.display = 'none';
+                        chipDisplay.textContent = '0';
+                    }
+                }
+            });
+        }
+
+        function selectChip(value, selectedBtn) {
+            currentChipValue = value;
+            // Atualiza classe 'selected'
+            chipSelection.querySelectorAll('.chip-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            selectedBtn.classList.add('selected');
+        }
+
+        // --- Inicialização ---
+
+        function createBettingGrid() {
+            const grid = bettingTable.querySelector('.betting-grid');
+            for (let i = 1; i <= 36; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'bet-cell';
+                cell.dataset.bet = i;
+                cell.textContent = i;
+                
+                if (redNumbers.includes(i)) {
+                    cell.classList.add('number-red');
+                } else {
+                    cell.classList.add('number-black');
+                }
+                
+                // Adiciona o span da ficha
+                const chipDisplay = document.createElement('span');
+                chipDisplay.className = 'chip-value';
+                chipDisplay.textContent = '0';
+                chipDisplay.style.display = 'none';
+                cell.appendChild(chipDisplay);
+
+                grid.appendChild(cell);
+            }
+        }
+        
+        // Adiciona Event Listeners
+        spinButton.addEventListener('click', spinWheel);
+        clearBetsButton.addEventListener('click', clearBets);
+
+        chipSelection.addEventListener('click', (e) => {
+            const btn = e.target.closest('.chip-btn');
+            if (btn) {
+                selectChip(parseInt(btn.dataset.value), btn);
+            }
+        });
+
+        bettingTable.addEventListener('click', (e) => {
+            const cell = e.target.closest('[data-bet]');
+            if (cell) {
+                placeBet(cell.dataset.bet);
+            }
+        });
+
+    // Inicializa o jogo
+    drawRouletteWheel(currentAngle);
+    createBettingGrid();
+    updateBalance();
+    showMessage("💰 FAÇA SUAS APOSTAS! BOA SORTE! 💰", 'text-yellow-300');
+    </script>
+</body>
+</html>

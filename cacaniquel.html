@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Caça-Níquel">
+  <meta name="theme-color" content="#991b1b">
+  <meta name="description" content="Slot Machine - Diversão garantida!">
+  
+  <title>Caça-Níquel - Slot Machine</title>
+  <!-- Carrega o Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Carrega a fonte Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh; /* permite o conteúdo crescer na vertical */
+      height: auto;
+      position: relative; /* não fixa o viewport — deixa o navegador gerenciar altura */
+      overflow: auto; /* permite rolagem quando necessário */
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      -moz-user-select: none;
+      background: linear-gradient(180deg, #1a0000 0%, #4a0000 50%, #1a0000 100%);
+    }
+    
+    /* Safe area para notch de iPhone */
+    @supports(padding: max(0px)) {
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+    }
+    
+    /* Animação de luzes neon piscando */
+    @keyframes neon-blink {
+      0%, 100% { opacity: 1; text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 30px #ff6b00; }
+      50% { opacity: 0.8; text-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700, 0 0 15px #ff6b00; }
+    }
+    
+    /* Animação de rotação dos rolos */
+    @keyframes spin-blur {
+      0% { filter: blur(0px); transform: translateY(0); }
+      50% { filter: blur(8px); transform: translateY(-20px); }
+      100% { filter: blur(0px); transform: translateY(0); }
+    }
+    
+    /* Estilo para a animação de pulso do Jackpot */
+    @keyframes jackpot-explosion {
+      0% { 
+        opacity: 0;
+        transform: scale(0.5);
+        box-shadow: 0 0 0px rgba(255, 215, 0, 0);
+      }
+      50% { 
+        opacity: 1;
+        transform: scale(1.2);
+        box-shadow: 0 0 100px rgba(255, 215, 0, 0.8), 0 0 200px rgba(255, 215, 0, 0.6);
+      }
+      100% { 
+        opacity: 0.9;
+        transform: scale(1);
+        box-shadow: 0 0 80px rgba(255, 215, 0, 0.7), 0 0 150px rgba(255, 215, 0, 0.5);
+      }
+    }
+    
+    @keyframes coin-rain {
+      0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+    }
+    
+    .animate-jackpot {
+      animation: jackpot-explosion 0.5s ease-out forwards;
+    }
+    
+    .coin-fall {
+      animation: coin-rain 2s ease-in-out forwards;
+    }
+    
+    /* Efeito de vidro cromado nos rolos */
+    .reel-glass {
+      background: linear-gradient(135deg, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.05) 50%, 
+        rgba(0,0,0,0.2) 100%);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 215, 0, 0.3);
+      box-shadow: 
+        inset 0 0 20px rgba(255, 215, 0, 0.1),
+        0 0 30px rgba(0, 0, 0, 0.5),
+        0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Efeito metálico dourado */
+    .gold-metal {
+      background: linear-gradient(145deg, #ffd700, #ffed4e, #ffd700, #b8860b);
+      background-size: 200% 200%;
+      animation: gold-shine 3s ease infinite;
+      text-shadow: 
+        2px 2px 4px rgba(0,0,0,0.8),
+        0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
+    @keyframes gold-shine {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    /* LED Display estilo Vegas */
+    .led-display {
+      background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+      border: 3px solid #333;
+      box-shadow: 
+        inset 0 0 30px rgba(255, 0, 0, 0.3),
+        0 0 20px rgba(255, 0, 0, 0.2);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 3px;
+    }
+    
+    /* Botões com efeito 3D realista */
+    .vegas-button {
+      background: linear-gradient(180deg, #ff0000 0%, #cc0000 50%, #990000 100%);
+      border: 3px solid #660000;
+      box-shadow: 
+        0 8px 0 #660000,
+        0 10px 20px rgba(0,0,0,0.5),
+        inset 0 2px 5px rgba(255,255,255,0.3);
+      transform: translateY(0);
+      transition: all 0.1s ease;
+    }
+    
+    .vegas-button:active {
+      transform: translateY(6px);
+      box-shadow: 
+        0 2px 0 #660000,
+        0 3px 10px rgba(0,0,0,0.5),
+        inset 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    /* Alavanca realista */
+    .lever {
+      background: linear-gradient(90deg, #8B0000 0%, #DC143C 50%, #8B0000 100%);
+      box-shadow: 
+        -5px 0 15px rgba(0,0,0,0.5),
+        inset 2px 0 5px rgba(255,255,255,0.3),
+        inset -2px 0 5px rgba(0,0,0,0.5);
+      border: 3px solid #660000;
+    }
+    
+    .lever-ball {
+      background: radial-gradient(circle at 30% 30%, #ff6b6b, #cc0000, #660000);
+      box-shadow: 
+        0 5px 15px rgba(0,0,0,0.6),
+        inset -3px -3px 8px rgba(0,0,0,0.5),
+        inset 3px 3px 8px rgba(255,100,100,0.5);
+    }
+    
+    /* Luzes de neon piscantes */
+    .neon-light {
+      animation: neon-blink 2s ease-in-out infinite;
+    }
+    
+    /* Moldura metálica cromada */
+    .chrome-frame {
+      background: linear-gradient(135deg, 
+        #c0c0c0 0%, 
+        #e8e8e8 25%, 
+        #c0c0c0 50%, 
+        #a8a8a8 75%, 
+        #c0c0c0 100%);
+      border: 4px solid #888;
+      box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.4),
+        inset 0 0 20px rgba(255,255,255,0.2);
+    }
+    
+    /* Símbolo girando */
+    .spinning-symbol {
+      animation: spin-blur 0.1s linear infinite;
+    }
+    
+    /* Melhor scroll para mobile */
+    .history-scroll {
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Botões mais amigáveis ao toque */
+    .touch-button {
+      min-height: 44px;
+      min-width: 44px;
+      touch-action: manipulation;
+    }
+    
+    /* Ajustes para orientação portrait */
+    @media screen and (max-height: 667px) and (orientation: landscape) {
+      .mobile-landscape-adjust {
+        padding: 0.5rem;
+      }
+    }
+    
+    /* Previne zoom em iOS */
+    input, select, textarea, button {
+      font-size: 16px !important;
+    }
+    
+    /* Efeito de brilho vencedor */
+    @keyframes winner-glow {
+      0%, 100% { 
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 
+                    0 0 40px rgba(255, 215, 0, 0.3),
+                    inset 0 0 20px rgba(255, 215, 0, 0.2);
+      }
+      50% { 
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 
+                    0 0 80px rgba(255, 215, 0, 0.6),
+                    inset 0 0 30px rgba(255, 215, 0, 0.4);
+      }
+    }
+    
+    .winner-reel {
+      animation: winner-glow 1s ease-in-out infinite;
+      border-color: #ffd700 !important;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-red-900 via-red-800 to-gray-900 flex items-center justify-center">
+
+  <!-- Container principal do jogo -->
+  <div class="relative w-full h-auto min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+    
+    <!-- Efeito de moedas caindo (Jackpot) -->
+    <div id="coin-container" class="absolute inset-0 pointer-events-none z-50"></div>
+    
+    <!-- Wrapper com tamanho máximo -->
+      <div class="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl h-auto min-h-screen flex flex-col">
+      
+      <!-- Efeito de Jackpot -->
+      <div id="jackpot-flash" class="absolute inset-0 bg-yellow-400 opacity-0 rounded-3xl z-10 pointer-events-none"></div>
+      
+      <!-- Moldura principal estilo Vegas -->
+  <div class="chrome-frame rounded-3xl p-1 sm:p-2 shadow-2xl w-full h-auto relative mobile-landscape-adjust">
+        
+        <!-- Fundo interno vermelho luxuoso -->
+  <div class="bg-gradient-to-b from-red-900 via-red-800 to-black rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-6 w-full h-auto border-4 border-yellow-600/50 relative overflow-hidden">
+        
+        <!-- Luzes decorativas no topo -->
+        <div class="absolute top-0 left-0 right-0 flex justify-around py-1 sm:py-2 z-0">
+          <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-500 neon-light"></div>
+          <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-yellow-400 neon-light" style="animation-delay: 0.3s;"></div>
+          <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500 neon-light" style="animation-delay: 0.6s;"></div>
+          <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-500 neon-light" style="animation-delay: 0.9s;"></div>
+          <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-purple-500 neon-light" style="animation-delay: 1.2s;"></div>
+        </div>
+      
+      <!-- Cabeçalho LED Display -->
+      <div class="gold-metal rounded-xl sm:rounded-2xl p-1 sm:p-2 mb-2 sm:mb-3 md:mb-4 shadow-2xl relative z-10">
+        <div class="led-display rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4">
+          <div class="flex justify-between items-center gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="text-xs sm:text-sm text-red-500 font-bold tracking-wider neon-light">💰 CRÉDITOS</div>
+              <div id="credits-display" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-green-400 drop-shadow-lg truncate neon-light" style="text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;">1000</div>
+            </div>
+            <div class="text-center flex-shrink-0">
+              <div class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold neon-light" style="filter: drop-shadow(0 0 15px #ffd700);">
+                🎰
+              </div>
+              <div class="text-xs sm:text-sm font-bold text-yellow-400 neon-light">LAS VEGAS</div>
+            </div>
+            <div class="text-right flex-1 min-w-0">
+              <div class="text-xs sm:text-sm text-yellow-500 font-bold tracking-wider neon-light">🏆 GANHOS</div>
+              <div id="total-won" class="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-yellow-400 truncate neon-light" style="text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;">+0</div>
+              <div id="total-lost" class="text-xs sm:text-sm text-red-400 font-bold truncate">-0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Display dos rolos - ESTILO LAS VEGAS -->
+      <div class="bg-black rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-8 mb-2 sm:mb-3 md:mb-4 shadow-2xl border-4 border-yellow-600/70 relative overflow-hidden" style="box-shadow: 0 0 50px rgba(255, 215, 0, 0.4), inset 0 0 30px rgba(0,0,0,0.8);">
+        
+        <!-- Linha de pagamento brilhante -->
+        <div class="absolute top-1/2 left-0 right-0 h-24 sm:h-28 md:h-32 lg:h-40 -translate-y-1/2 border-y-4 border-yellow-400/80 pointer-events-none z-10" style="box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.3);"></div>
+        
+        <!-- Indicadores de linha de pagamento -->
+        <div class="absolute top-1/2 left-2 -translate-y-1/2 z-20">
+          <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-400 neon-light flex items-center justify-center font-bold text-black text-xs sm:text-sm">►</div>
+        </div>
+        <div class="absolute top-1/2 right-2 -translate-y-1/2 z-20">
+          <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-400 neon-light flex items-center justify-center font-bold text-black text-xs sm:text-sm">◄</div>
+        </div>
+        
+        <div class="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <!-- Rolo 0 -->
+          <div class="relative transform transition-all duration-300 hover:scale-105">
+            <div class="reel-glass rounded-xl overflow-hidden shadow-2xl">
+              <div id="reel-container-0" class="transition-transform duration-300">
+                <div id="reel-0" class="h-24 sm:h-28 md:h-32 lg:h-40 flex items-center justify-center text-4xl sm:text-5xl md:text-6xl lg:text-8xl bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 relative">
+                  🍒
+                  <!-- Reflexo de vidro -->
+                  <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Label do rolo -->
+            <div class="text-center mt-1 sm:mt-2">
+              <div class="text-xs sm:text-sm font-bold text-yellow-400">ROLO 1</div>
+            </div>
+          </div>
+          
+          <!-- Rolo 1 -->
+          <div class="relative transform transition-all duration-300 hover:scale-105">
+            <div class="reel-glass rounded-xl overflow-hidden shadow-2xl">
+              <div id="reel-container-1" class="transition-transform duration-300">
+                <div id="reel-1" class="h-24 sm:h-28 md:h-32 lg:h-40 flex items-center justify-center text-4xl sm:text-5xl md:text-6xl lg:text-8xl bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 relative">
+                  🍒
+                  <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-1 sm:mt-2">
+              <div class="text-xs sm:text-sm font-bold text-yellow-400">ROLO 2</div>
+            </div>
+          </div>
+          
+          <!-- Rolo 2 -->
+          <div class="relative transform transition-all duration-300 hover:scale-105">
+            <div class="reel-glass rounded-xl overflow-hidden shadow-2xl">
+              <div id="reel-container-2" class="transition-transform duration-300">
+                <div id="reel-2" class="h-24 sm:h-28 md:h-32 lg:h-40 flex items-center justify-center text-4xl sm:text-5xl md:text-6xl lg:text-8xl bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 relative">
+                  🍒
+                  <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-1 sm:mt-2">
+              <div class="text-xs sm:text-sm font-bold text-yellow-400">ROLO 3</div>
+            </div>
+          </div>
+          
+          <!-- Rolo 3 -->
+          <div class="relative transform transition-all duration-300 hover:scale-105">
+            <div class="reel-glass rounded-xl overflow-hidden shadow-2xl">
+              <div id="reel-container-3" class="transition-transform duration-300">
+                <div id="reel-3" class="h-24 sm:h-28 md:h-32 lg:h-40 flex items-center justify-center text-4xl sm:text-5xl md:text-6xl lg:text-8xl bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 relative">
+                  🍒
+                  <div class="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-1 sm:mt-2">
+              <div class="text-xs sm:text-sm font-bold text-yellow-400">ROLO 4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagem de status LED -->
+      <div class="led-display rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 mb-2 sm:mb-3 md:mb-4 border-2 border-yellow-600/50 shadow-2xl">
+        <p id="message-bar" class="text-center text-sm sm:text-base md:text-lg lg:text-xl font-bold text-yellow-300 leading-tight neon-light tracking-wide" style="text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;">
+          INSIRA SUA APOSTA E PUXE A ALAVANCA!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3 md:mb-4">
+        <!-- Controles de aposta estilo Vegas -->
+        <div class="sm:col-span-2 gold-metal rounded-xl sm:rounded-2xl p-1 shadow-2xl mb-3 sm:mb-0">
+          <div class="led-display rounded-lg sm:rounded-xl p-3 sm:p-4">
+            <div class="text-yellow-400 text-xs sm:text-sm font-bold mb-2 tracking-wider neon-light">💵 VALOR DA APOSTA</div>
+            <div class="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3">
+              <button id="bet-minus-5" class="vegas-button touch-button text-white font-bold py-2 px-2 sm:px-3 md:px-4 rounded-lg transition-all text-xs sm:text-sm disabled:opacity-30">
+                -5
+              </button>
+              <button id="bet-minus-1" class="vegas-button touch-button text-white font-bold py-2 px-2 sm:px-3 rounded-lg transition-all text-xs sm:text-sm disabled:opacity-30">
+                -1
+              </button>
+              <div class="flex-1 bg-black rounded-lg sm:rounded-xl p-3 sm:p-4 text-center border-2 border-green-500/50" style="box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.2);">
+                <div id="bet-display" class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-400 neon-light" style="text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;">10</div>
+              </div>
+              <button id="bet-plus-1" class="touch-button text-white font-bold py-2 px-2 sm:px-3 rounded-lg transition-all text-xs sm:text-sm disabled:opacity-30" style="background: linear-gradient(180deg, #00cc00 0%, #009900 50%, #006600 100%); border: 3px solid #004400; box-shadow: 0 8px 0 #004400, 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.3);">
+                +1
+              </button>
+              <button id="bet-plus-5" class="touch-button text-white font-bold py-2 px-2 sm:px-3 md:px-4 rounded-lg transition-all text-xs sm:text-sm disabled:opacity-30" style="background: linear-gradient(180deg, #00cc00 0%, #009900 50%, #006600 100%); border: 3px solid #004400; box-shadow: 0 8px 0 #004400, 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.3);">
+                +5
+              </button>
+            </div>
+            <button id="bet-max" class="touch-button w-full font-bold py-3 px-4 rounded-lg transition-all text-xs sm:text-sm shadow-2xl disabled:opacity-30" style="background: linear-gradient(180deg, #ffd700 0%, #ffed4e 50%, #b8860b 100%); color: #000; border: 3px solid #8B6914; box-shadow: 0 8px 0 #8B6914, 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.5);">
+              ⭐ APOSTA MÁXIMA ⭐
+            </button>
+          </div>
+        </div>
+
+        <!-- Alavanca Mecânica Realista -->
+        <div class="gold-metal rounded-xl sm:rounded-2xl p-1 shadow-2xl">
+          <div class="led-display rounded-lg sm:rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center relative">
+            <button id="lever-button" class="lever touch-button w-20 h-32 sm:w-24 sm:h-40 rounded-full shadow-2xl transform transition-all disabled:cursor-not-allowed disabled:opacity-50 relative">
+              <!-- Haste da alavanca -->
+              <div class="absolute -top-10 sm:-top-12 left-1/2 -translate-x-1/2 w-4 h-12 sm:w-5 sm:h-16 rounded-t-full" style="background: linear-gradient(90deg, #333 0%, #666 50%, #333 100%); box-shadow: inset 2px 0 5px rgba(0,0,0,0.5), -2px 0 10px rgba(0,0,0,0.5);"></div>
+              <!-- Bola da alavanca -->
+              <div class="lever-ball absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-black/30"></div>
+              <!-- Brilho -->
+              <div class="absolute top-1/4 left-1/4 w-4 h-4 sm:w-6 sm:h-6 bg-white/40 rounded-full blur-sm"></div>
+            </button>
+            <div class="text-yellow-400 text-xs sm:text-sm font-bold mt-2 sm:mt-3 text-center tracking-wider neon-light">
+              ⬇ PUXE! ⬇
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histórico e Tabela -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+        <!-- Histórico LED -->
+        <div class="gold-metal rounded-xl sm:rounded-2xl p-1 shadow-2xl">
+          <div class="led-display rounded-lg sm:rounded-xl p-2 sm:p-3">
+            <div class="text-yellow-400 text-xs sm:text-sm font-bold mb-2 tracking-wider neon-light">📊 HISTÓRICO</div>
+            <div id="history-container" class="space-y-1 max-h-32 sm:max-h-40 overflow-y-auto history-scroll">
+              <!-- Histórico será preenchido pelo JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de pagamentos LED -->
+        <div class="gold-metal rounded-xl sm:rounded-2xl p-1 shadow-2xl">
+          <div class="led-display rounded-lg sm:rounded-xl p-2 sm:p-3">
+            <div class="text-yellow-400 text-xs sm:text-sm font-bold mb-2 tracking-wider neon-light">💎 TABELA DE PRÊMIOS</div>
+            <div class="space-y-0.5 sm:space-y-1 text-xs">
+              <div class="flex justify-between items-center p-1 rounded" style="background: linear-gradient(90deg, rgba(255,215,0,0.2), transparent);"><span class="text-xs sm:text-sm">💎💎💎💎</span><span class="text-yellow-400 font-bold text-xs neon-light">100x JACKPOT</span></div>
+              <div class="flex justify-between items-center p-1 rounded" style="background: linear-gradient(90deg, rgba(255,100,0,0.2), transparent);"><span class="text-xs sm:text-sm">7️⃣7️⃣7️⃣7️⃣</span><span class="text-orange-400 font-bold text-xs neon-light">50x MEGA</span></div>
+              <div class="flex justify-between items-center p-1"><span class="text-xs text-gray-300">4 Iguais</span><span class="text-green-400 text-xs font-bold">25x</span></div>
+              <div class="flex justify-between items-center p-1"><span class="text-xs text-gray-300">⭐⭐⭐</span><span class="text-green-400 text-xs font-bold">15x</span></div>
+              <div class="flex justify-between items-center p-1"><span class="text-xs text-gray-300">3 Seguidos</span><span class="text-green-400 text-xs font-bold">10x</span></div>
+              <div class="flex justify-between items-center p-1"><span class="text-xs text-gray-300">3 Iguais</span><span class="text-blue-400 text-xs">8x</span></div>
+              <div class="flex justify-between items-center p-1"><span class="text-xs text-gray-300">2 Pares</span><span class="text-blue-400 text-xs">5x</span></div>
+              <div class="flex justify-between items-center p-1"><span class="text-xs text-gray-300">Par 💎</span><span class="text-blue-400 text-xs">4x</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Som -->
+      <button id="sound-button" class="touch-button absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 p-2 rounded-lg z-20">
+        <!-- Ícone VolumeX (Desligado) - Padrão -->
+        <svg id="icon-volume-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400">
+          <path d="M11 5 6 9H2v6h4l5 4V5z"></path>
+          <line x1="23" x2="17" y1="9" y2="15"></line>
+          <line x1="17" x2="23" y1="9" y2="15"></line>
+        </svg>
+        <!-- Ícone Volume2 (Ligado) - Oculto -->
+        <svg id="icon-volume-on" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 hidden">
+          <path d="M11 5 6 9H2v6h4l5 4V5z"></path>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+      </button>
+
+      <!-- Aviso de créditos baixos -->
+      <div id="low-credits-warning" class="mt-2 sm:mt-3 md:mt-4 gold-metal rounded-xl sm:rounded-2xl p-1 shadow-2xl text-center hidden">
+        <div class="led-display rounded-lg sm:rounded-xl p-3 sm:p-4">
+          <p class="text-red-400 font-bold text-sm sm:text-base neon-light tracking-wider">⚠️ CRÉDITOS INSUFICIENTES! ⚠️</p>
+          <button id="reload-credits-button" class="touch-button mt-2 text-white font-bold py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base shadow-2xl" style="background: linear-gradient(180deg, #00cc00 0%, #009900 50%, #006600 100%); border: 3px solid #004400; box-shadow: 0 8px 0 #004400, 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.3);">
+            💵 RECARREGAR CRÉDITOS 💵
+          </button>
+        </div>
+      </div>
+      
+      </div><!-- Fecha .bg-gradient-to-b -->
+      </div><!-- Fecha .chrome-frame -->
+    </div><!-- Fecha wrapper -->
+  </div><!-- Fecha container principal -->
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- ESTADO DA APLICAÇÃO ---
+      const symbols = ['🍒', '🍋', '🍊', '🍇', '🍉', '⭐', '💎', '7️⃣'];
+      let reels = [symbols[0], symbols[0], symbols[0], symbols[0]];
+      let spinning = [false, false, false, false];
+      let credits = 1000;
+      let bet = 10;
+      let message = '🎰 INSIRA SUA APOSTA E PUXE A ALAVANCA! 🎰';
+      let totalWon = 0;
+      let totalLost = 0;
+      let history = [];
+      let soundEnabled = false;
+      let leverPulled = false;
+      let jackpotFlash = false;
+      let audioContext = null;
+
+      // --- REFERÊNCIAS DO DOM ---
+      const creditsDisplay = document.getElementById('credits-display');
+      const totalWonDisplay = document.getElementById('total-won');
+      const totalLostDisplay = document.getElementById('total-lost');
+      const messageBar = document.getElementById('message-bar');
+      const betDisplay = document.getElementById('bet-display');
+      const historyContainer = document.getElementById('history-container');
+      const jackpotFlashElement = document.getElementById('jackpot-flash');
+      const lowCreditsWarning = document.getElementById('low-credits-warning');
+      const iconVolumeOn = document.getElementById('icon-volume-on');
+      const iconVolumeOff = document.getElementById('icon-volume-off');
+      const leverButton = document.getElementById('lever-button');
+      
+      const reelElements = [
+        document.getElementById('reel-0'),
+        document.getElementById('reel-1'),
+        document.getElementById('reel-2'),
+        document.getElementById('reel-3')
+      ];
+      
+      const reelContainers = [
+        document.getElementById('reel-container-0'),
+        document.getElementById('reel-container-1'),
+        document.getElementById('reel-container-2'),
+        document.getElementById('reel-container-3')
+      ];
+
+      const betButtons = {
+        minus5: document.getElementById('bet-minus-5'),
+        minus1: document.getElementById('bet-minus-1'),
+        plus1: document.getElementById('bet-plus-1'),
+        plus5: document.getElementById('bet-plus-5'),
+        max: document.getElementById('bet-max')
+      };
+      
+      const soundButton = document.getElementById('sound-button');
+      const reloadCreditsButton = document.getElementById('reload-credits-button');
+      const coinContainer = document.getElementById('coin-container');
+
+      // --- FUNÇÕES DE EFEITOS VISUAIS ---
+      const createCoinRain = () => {
+        const numberOfCoins = 30;
+        for(let i = 0; i < numberOfCoins; i++) {
+          setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.textContent = '💰';
+            coin.className = 'coin-fall absolute text-4xl';
+            coin.style.left = `${Math.random() * 100}%`;
+            coin.style.animationDelay = `${Math.random() * 0.5}s`;
+            coinContainer.appendChild(coin);
+            
+            setTimeout(() => coin.remove(), 2000);
+          }, i * 50);
+        }
+      };
+      
+      const addWinnerGlow = (reelIndices) => {
+        reelIndices.forEach(idx => {
+          reelContainers[idx].classList.add('winner-reel');
+        });
+        
+        setTimeout(() => {
+          reelIndices.forEach(idx => {
+            reelContainers[idx].classList.remove('winner-reel');
+          });
+        }, 3000);
+      };
+
+      // --- FUNÇÕES DE ÁUDIO ---
+      const playSound = (type) => {
+        if (!soundEnabled) return;
+        
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        const ctx = audioContext;
+        
+        switch(type) {
+          case 'spin': {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 100;
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.1);
+            break;
+          }
+          case 'stop': {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 400;
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.05);
+            break;
+          }
+          case 'win':
+            [400, 500, 600, 800].forEach((freq, i) => {
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.connect(g);
+              g.connect(ctx.destination);
+              o.frequency.value = freq;
+              g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.1);
+              g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.2);
+              o.start(ctx.currentTime + i * 0.1);
+              o.stop(ctx.currentTime + i * 0.1 + 0.2);
+            });
+            break;
+          case 'jackpot':
+            for(let i = 0; i < 10; i++) {
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.connect(g);
+              g.connect(ctx.destination);
+              o.frequency.value = 400 + Math.random() * 400;
+              g.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.05);
+              g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.05 + 0.1);
+              o.start(ctx.currentTime + i * 0.05);
+              o.stop(ctx.currentTime + i * 0.05 + 0.1);
+            }
+            break;
+        }
+      };
+
+      // --- FUNÇÕES DE LÓGICA ---
+      const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
+
+      const generateReelStrip = () => {
+        const strip = [];
+        for (let i = 0; i < 20; i++) {
+          strip.push(getRandomSymbol());
+        }
+        return strip;
+      };
+
+      const checkWin = (centerSymbols) => {
+        const s = centerSymbols;
+        const counts = {};
+        s.forEach(sym => counts[sym] = (counts[sym] || 0) + 1);
+        
+        if (s.every(sym => sym === '💎')) {
+          return { amount: bet * 100, type: 'JACKPOT! 💎💎💎💎', multiplier: '100x' };
+        }
+        if (s.every(sym => sym === '7️⃣')) {
+          return { amount: bet * 50, type: 'SUPER PRÊMIO! 7️⃣7️⃣7️⃣7️⃣', multiplier: '50x' };
+        }
+        if (s.every(sym => sym === s[0])) {
+          return { amount: bet * 25, type: `4 ${s[0]} seguidos!`, multiplier: '25x' };
+        }
+        if (s.filter(sym => sym === '⭐').length === 3) {
+          return { amount: bet * 15, type: 'Três Estrelas! ⭐⭐⭐', multiplier: '15x' };
+        }
+        if (s[0] === s[1] && s[1] === s[2]) {
+          return { amount: bet * 10, type: `Três ${s[0]} seguidos`, multiplier: '10x' };
+        }
+        if (s[1] === s[2] && s[2] === s[3]) {
+          return { amount: bet * 10, type: `Três ${s[1]} seguidos`, multiplier: '10x' };
+        }
+        
+        const triple = Object.entries(counts).find(([_, count]) => count === 3);
+        if (triple) {
+          return { amount: bet * 8, type: `Três ${triple[0]}`, multiplier: '8x' };
+        }
+        
+        const pairs = Object.values(counts).filter(c => c === 2).length;
+        if (pairs === 2) {
+          return { amount: bet * 5, type: 'Dois Pares', multiplier: '5x' };
+        }
+        if (counts['💎'] === 2) {
+          return { amount: bet * 4, type: 'Par de Diamantes 💎💎', multiplier: '4x' };
+        }
+        if (counts['7️⃣'] === 2) {
+          return { amount: bet * 3, type: 'Par de Setes 7️⃣7️⃣', multiplier: '3x' };
+        }
+        if (pairs === 1) {
+          return { amount: bet * 2, type: 'Um Par', multiplier: '2x' };
+        }
+        
+        return { amount: 0, type: 'Não ganhou', multiplier: '0x' };
+      };
+
+      // --- FUNÇÃO PRINCIPAL DE ATUALIZAÇÃO DA UI ---
+      const updateUI = () => {
+        // Atualiza textos
+        creditsDisplay.textContent = credits;
+        totalWonDisplay.textContent = `+${totalWon}`;
+        totalLostDisplay.textContent = `-${totalLost}`;
+        messageBar.textContent = message.toUpperCase();
+        betDisplay.textContent = bet;
+        
+        // Atualiza rolos (para estado de repouso)
+        reels.forEach((symbol, idx) => {
+          reelElements[idx].textContent = symbol;
+        });
+
+        // Atualiza botões
+        const isSpinning = spinning.some(s => s);
+        betButtons.minus5.disabled = isSpinning || bet <= 5;
+        betButtons.minus1.disabled = isSpinning || bet <= 5;
+        betButtons.plus1.disabled = isSpinning || bet >= 100;
+        betButtons.plus5.disabled = isSpinning || bet >= 100;
+        betButtons.max.disabled = isSpinning;
+        leverButton.disabled = isSpinning || credits < bet;
+
+        // Animação da alavanca
+        leverButton.classList.toggle('translate-y-6', leverPulled);
+        leverButton.classList.toggle('scale-95', leverPulled);
+
+        // Flash do Jackpot com animação
+        if(jackpotFlash) {
+          jackpotFlashElement.classList.remove('opacity-0');
+          jackpotFlashElement.classList.add('animate-jackpot');
+        } else {
+          jackpotFlashElement.classList.add('opacity-0');
+          jackpotFlashElement.classList.remove('animate-jackpot');
+        }
+
+        // Ícone de som
+        iconVolumeOn.classList.toggle('hidden', !soundEnabled);
+        iconVolumeOff.classList.toggle('hidden', soundEnabled);
+
+        // Aviso de créditos baixos
+        lowCreditsWarning.classList.toggle('hidden', credits >= bet);
+
+        // Atualiza histórico
+        historyContainer.innerHTML = ''; // Limpa o container
+        history.forEach(item => {
+          const div = document.createElement('div');
+          div.className = `flex justify-between text-xs p-1 rounded ${item.win ? 'bg-green-900' : 'bg-red-900'}`;
+          div.innerHTML = `
+            <span>${item.symbols}</span>
+            <span class="font-bold">${item.result}</span>
+            <span class="text-yellow-400">${item.multiplier}</span>
+          `;
+          historyContainer.appendChild(div);
+        });
+      };
+
+      // --- FUNÇÕES DE CONTROLE ---
+      const pullLever = () => {
+        if (spinning.some(s => s) || credits < bet) return;
+        
+        // 1. Anima alavanca
+        leverPulled = true;
+        updateUI();
+        setTimeout(() => {
+          leverPulled = false;
+          updateUI();
+        }, 300);
+        
+        // 2. Inicia giro
+        playSound('spin');
+        credits -= bet;
+        message = '🎰 GIRANDO OS ROLOS...';
+        spinning = [true, true, true, true];
+        updateUI();
+        
+        const intervals = [];
+        const stopTimes = [1200, 1800, 2400, 3000]; // Tempos mais realistas
+        const finalReels = [...reels]; // Array para guardar os resultados finais
+
+        reels.forEach((_, reelIndex) => {
+          let position = 0;
+          const reelStrip = generateReelStrip();
+          
+          // Adiciona classe de spinning para blur effect
+          reelElements[reelIndex].classList.add('spinning-symbol');
+          
+          // 3. Animação de giro (troca rápida de símbolos)
+          const interval = setInterval(() => {
+            position = (position + 1) % reelStrip.length;
+            reelElements[reelIndex].textContent = reelStrip[position];
+          }, 80); // Velocidade ajustada para parecer mais realista
+          
+          intervals.push(interval);
+          
+          // 4. Parada do rolo
+          setTimeout(() => {
+            clearInterval(interval);
+            playSound('stop');
+            
+            // Remove classe de spinning
+            reelElements[reelIndex].classList.remove('spinning-symbol');
+            
+            const finalSymbol = reelStrip[position];
+            finalReels[reelIndex] = finalSymbol; // Guarda o símbolo final
+            reelElements[reelIndex].textContent = finalSymbol; // Define o símbolo final na UI
+            
+            spinning[reelIndex] = false;
+            
+            // 5. Verifica vitória quando o último rolo parar
+            if (reelIndex === 3) {
+              setTimeout(() => {
+                reels = [...finalReels]; // Atualiza o estado principal dos rolos
+                const result = checkWin(finalReels);
+                
+                if (result.amount > 0) {
+                  // Identifica quais rolos formaram a combinação vencedora
+                  const winningReels = [];
+                  if (result.type.includes('JACKPOT') || result.type.includes('SUPER') || result.type.includes('4')) {
+                    winningReels.push(0, 1, 2, 3);
+                  } else if (finalReels[0] === finalReels[1] && finalReels[1] === finalReels[2]) {
+                    winningReels.push(0, 1, 2);
+                  } else if (finalReels[1] === finalReels[2] && finalReels[2] === finalReels[3]) {
+                    winningReels.push(1, 2, 3);
+                  } else {
+                    // Para pares e outras combinações
+                    finalReels.forEach((sym, idx) => {
+                      if (finalReels.filter(s => s === sym).length >= 2) {
+                        winningReels.push(idx);
+                      }
+                    });
+                  }
+                  
+                  addWinnerGlow(winningReels);
+                  
+                  if (result.type.includes('JACKPOT')) {
+                    playSound('jackpot');
+                    jackpotFlash = true;
+                    createCoinRain(); // Chuva de moedas!
+                    setTimeout(() => {
+                      jackpotFlash = false;
+                      updateUI();
+                    }, 3000);
+                  } else {
+                    playSound('win');
+                  }
+                  
+                  credits += result.amount;
+                  totalWon += result.amount;
+                  message = `🎉 ${result.type} - GANHOU ${result.amount} CRÉDITOS! 🎉`;
+                  history.unshift({
+                    symbols: finalReels.join(''),
+                    result: `+${result.amount}`,
+                    multiplier: result.multiplier,
+                    win: true
+                  });
+                } else {
+                  totalLost += bet;
+                  message = '😞 NÃO FOI DESSA VEZ... TENTE NOVAMENTE!';
+                  history.unshift({
+                    symbols: finalReels.join(''),
+                    result: `-${bet}`,
+                    multiplier: '0x',
+                    win: false
+                  });
+                }
+                
+                history = history.slice(0, 10); // Limita o histórico
+                updateUI(); // Atualização final
+              }, 200);
+            }
+          }, stopTimes[reelIndex]);
+        });
+      };
+
+      const adjustBet = (amount) => {
+        if (spinning.some(s => s)) return;
+        const newBet = Math.max(5, Math.min(100, bet + amount));
+        bet = newBet;
+        updateUI();
+      };
+
+      const maxBet = () => {
+        if (spinning.some(s => s)) return;
+        bet = Math.min(100, credits);
+        updateUI();
+      };
+      
+      const toggleSound = () => {
+        soundEnabled = !soundEnabled;
+        if(soundEnabled && !audioContext) {
+           audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        updateUI();
+      };
+      
+      const reloadCredits = () => {
+        credits = 1000;
+        message = '💵 CRÉDITOS RECARREGADOS! BOA SORTE! 💵';
+        updateUI();
+      };
+
+      // --- EVENT LISTENERS ---
+      leverButton.addEventListener('click', pullLever);
+      betButtons.minus5.addEventListener('click', () => adjustBet(-5));
+      betButtons.minus1.addEventListener('click', () => adjustBet(-1));
+      betButtons.plus1.addEventListener('click', () => adjustBet(1));
+      betButtons.plus5.addEventListener('click', () => adjustBet(5));
+      betButtons.max.addEventListener('click', maxBet);
+      soundButton.addEventListener('click', toggleSound);
+      reloadCreditsButton.addEventListener('click', reloadCredits);
+      
+      // --- PREVENÇÃO DE GESTOS E MELHORIAS MOBILE ---
+      // Previne comportamento padrão de gestos
+      document.addEventListener('gesturestart', (e) => e.preventDefault());
+      document.addEventListener('gesturechange', (e) => e.preventDefault());
+      document.addEventListener('gestureend', (e) => e.preventDefault());
+      
+      // Previne scroll bounce no iOS
+      let lastTouchY = 0;
+      document.addEventListener('touchstart', (e) => {
+        lastTouchY = e.touches[0].clientY;
+      }, { passive: false });
+      
+      document.addEventListener('touchmove', (e) => {
+        const touchY = e.touches[0].clientY;
+        const touchYDelta = touchY - lastTouchY;
+        lastTouchY = touchY;
+        
+        // Previne scroll se tentar scrollar no body
+        if (e.target === document.body) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      
+      // Oculta a barra de endereço no scroll (mobile)
+      window.scrollTo(0, 1);
+      
+      // Feedback háptico nos botões (se disponível)
+      function hapticFeedback() {
+        if ('vibrate' in navigator) {
+          navigator.vibrate(10);
+        }
+      }
+      
+      // Adiciona feedback háptico aos botões
+      [leverButton, betButtons.minus5, betButtons.minus1, betButtons.plus1, betButtons.plus5, betButtons.max].forEach(btn => {
+        btn.addEventListener('touchstart', hapticFeedback);
+      });
+      
+      // --- INICIALIZAÇÃO ---
+      updateUI();
+    });
+  </script>
+</body>
+</html>

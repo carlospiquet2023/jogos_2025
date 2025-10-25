@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quebra-Cabeça Deslizante</title>
+    <!-- Inclui o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a biblioteca de ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Define uma fonte padrão agradável */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Fallback para 'Inter' caso o Tailwind não carregue fontes */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        /* A animação de bounce já está incluída no Tailwind (animate-bounce) */
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center p-4 min-h-screen">
+
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-2xl w-full">
+        
+        <h1 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-800">
+            🧩 Quebra-Cabeça Deslizante
+        </h1>
+
+        <!-- Seção do Tutorial (inicialmente oculta) -->
+        <div id="tutorial-modal" class="hidden mb-6 bg-blue-50 border-2 border-blue-300 rounded-xl p-6">
+            <div class="flex justify-between items-start mb-4">
+                <h2 class="text-2xl font-bold text-blue-800">
+                    📚 Tutorial: Como Resolver
+                </h2>
+                <button id="tutorial-close" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div id="tutorial-content" class="bg-white rounded-lg p-4 mb-4">
+                <!-- Conteúdo do passo do tutorial será injetado aqui -->
+            </div>
+
+            <!-- Grade de exemplo do tutorial -->
+            <div id="tutorial-grid" class="grid grid-cols-3 gap-2 mb-4 max-w-xs mx-auto">
+                <!-- Peças do tutorial serão injetadas aqui -->
+            </div>
+
+            <div class="flex justify-between items-center">
+                <button id="tutorial-prev" class="flex items-center gap-2 px-4 py-2 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:text-gray-400 rounded-lg transition-colors">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    Anterior
+                </button>
+                <span id="tutorial-step-text" class="text-sm text-gray-600">
+                    Passo 1 de 3
+                </span>
+                <button id="tutorial-next" class="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-lg transition-colors">
+                    Próximo
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Controles e Estatísticas -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 flex-wrap gap-4">
+            <div class="flex gap-4">
+                <div class="bg-blue-100 px-4 py-2 rounded-lg">
+                    <span class="text-sm text-gray-600">Movimentos:</span>
+                    <span id="moves-count" class="ml-2 font-bold text-blue-600">0</span>
+                </div>
+                <div class="bg-green-100 px-4 py-2 rounded-lg">
+                    <span class="text-sm text-gray-600">Tempo:</span>
+                    <span id="time-count" class="ml-2 font-bold text-green-600">0:00</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="tutorial-button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                    <span class="hidden sm:inline">Tutorial</span>
+                </button>
+                <select id="size-select" class="px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-purple-500">
+                    <option value="3">3x3</option>
+                    <option value="4">4x4</option>
+                    <option value="5">5x5</option>
+                </select>
+                <button id="shuffle-button" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <i data-lucide="shuffle" class="w-5 h-5"></i>
+                    <span class="hidden sm:inline">Embaralhar</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mensagem de Conclusão (inicialmente oculta) -->
+        <div id="completion-message" class="hidden mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-4 rounded-xl text-center animate-bounce">
+            <i data-lucide="trophy" class="inline mr-2 w-6 h-6"></i>
+            <span id="completion-text" class="font-bold text-lg">
+                Parabéns!
+            </span>
+        </div>
+
+        <!-- Grade do Jogo -->
+        <div id="puzzle-grid" class="grid gap-2 mx-auto">
+            <!-- As peças serão geradas pelo JavaScript -->
+        </div>
+
+        <!-- Instruções -->
+        <div class="mt-6 text-center text-gray-600 text-sm">
+            <p>Clique nas peças adjacentes ao espaço vazio para movê-las.</p>
+            <p class="mt-1">As peças com borda amarela podem ser movidas.</p>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Variáveis de Estado ---
+            let size = 3;
+            let tiles = [];
+            let moves = 0;
+            let isComplete = false;
+            let time = 0;
+            let isRunning = false;
+            let showTutorial = false;
+            let tutorialStep = 0;
+            let timerInterval = null;
+
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#AAB7B8',
+                '#52BE80', '#EB984E', '#AED6F1', '#F1948A', '#D7BDE2',
+                '#A3E4D7', '#FAD7A0', '#82E0AA', '#D2B4DE', '#F5B7B1',
+                '#76D7C4', '#F7CAC9', '#8E44AD', '#2ECC71', '#E67E22'
+            ];
+
+            const tutorialSteps = [
+                {
+                    title: "Passo 1: Primeira Linha",
+                    description: "Comece resolvendo a primeira linha. Coloque o número 1 no canto superior esquerdo, depois o 2, e assim por diante.",
+                    example: "Para um 3x3, organize: 1-2-3 na primeira linha",
+                    tiles: [1, 2, 3, 4, 5, 6, 7, 8, 0]
+                },
+                {
+                    title: "Passo 2: Segunda Linha",
+                    description: "Depois da primeira linha completa, trabalhe na segunda linha da mesma forma, começando pela esquerda.",
+                    example: "Organize: 4-5-6 na segunda linha",
+                    tiles: [1, 2, 3, 4, 5, 6, 7, 8, 0]
+                },
+                {
+                    title: "Passo 3: Última Linha/Coluna",
+                    description: "Com duas linhas completas, a última linha geralmente se resolve automaticamente com movimentos circulares.",
+                    example: "Use movimentos circulares: →↓←↑ até completar",
+                    tiles: [1, 2, 3, 4, 5, 6, 7, 8, 0]
+                }
+            ];
+
+            // --- Referências do DOM ---
+            const puzzleGrid = document.getElementById('puzzle-grid');
+            const movesEl = document.getElementById('moves-count');
+            const timeEl = document.getElementById('time-count');
+            const completionMessageEl = document.getElementById('completion-message');
+            const completionTextEl = document.getElementById('completion-text');
+            const sizeSelect = document.getElementById('size-select');
+            const shuffleButton = document.getElementById('shuffle-button');
+            
+            // Tutorial
+            const tutorialButton = document.getElementById('tutorial-button');
+            const tutorialModal = document.getElementById('tutorial-modal');
+            const tutorialClose = document.getElementById('tutorial-close');
+            const tutorialContentEl = document.getElementById('tutorial-content');
+            const tutorialGridEl = document.getElementById('tutorial-grid');
+            const tutorialStepTextEl = document.getElementById('tutorial-step-text');
+            const tutorialPrev = document.getElementById('tutorial-prev');
+            const tutorialNext = document.getElementById('tutorial-next');
+
+            // --- Funções de Lógica ---
+
+            const initializePuzzle = () => {
+                stopTimer();
+                const totalTiles = size * size;
+                tiles = Array.from({ length: totalTiles }, (_, i) => i);
+                shuffleArray(tiles);
+                
+                // Garante que o quebra-cabeça seja solucionável (verificação de paridade)
+                while (!isSolvable(tiles, size)) {
+                    shuffleArray(tiles);
+                }
+
+                moves = 0;
+                time = 0;
+                isComplete = false;
+                isRunning = false;
+                
+                updateStats();
+                toggleCompletionMessage(false);
+                renderPuzzle();
+            };
+            
+            // Verifica a paridade para garantir que o quebra-cabeça tenha solução
+            const isSolvable = (tiles, gridSize) => {
+                let inversions = 0;
+                for (let i = 0; i < tiles.length; i++) {
+                    for (let j = i + 1; j < tiles.length; j++) {
+                        if (tiles[i] > 0 && tiles[j] > 0 && tiles[i] > tiles[j]) {
+                            inversions++;
+                        }
+                    }
+                }
+
+                if (gridSize % 2 === 1) { // Grade ímpar
+                    return inversions % 2 === 0;
+                } else { // Grade par
+                    const emptyRow = Math.floor(findEmptyIndex() / gridSize);
+                    // Conta a linha do espaço vazio a partir de baixo (1-indexado)
+                    const emptyRowFromBottom = gridSize - emptyRow;
+                    if (emptyRowFromBottom % 2 === 0) { // Linha vazia par (de baixo)
+                        return inversions % 2 === 1;
+                    } else { // Linha vazia ímpar (de baixo)
+                        return inversions % 2 === 0;
+                    }
+                }
+            };
+
+            const shuffleArray = (array) => {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            };
+
+            const findEmptyIndex = () => tiles.indexOf(0);
+
+            const canMove = (index) => {
+                const emptyIndex = findEmptyIndex();
+                const emptyRow = Math.floor(emptyIndex / size);
+                const emptyCol = emptyIndex % size;
+                const tileRow = Math.floor(index / size);
+                const tileCol = index % size;
+
+                return (
+                    (Math.abs(emptyRow - tileRow) === 1 && emptyCol === tileCol) ||
+                    (Math.abs(emptyCol - tileCol) === 1 && emptyRow === tileRow)
+                );
+            };
+
+            const moveTile = (index) => {
+                if (!canMove(index) || isComplete || showTutorial) return;
+                
+                if (!isRunning) {
+                    isRunning = true;
+                    startTimer();
+                }
+
+                const emptyIndex = findEmptyIndex();
+                [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
+                moves++;
+                
+                updateStats();
+                renderPuzzle(); // Re-renderiza para mostrar o movimento
+                checkComplete();
+            };
+
+            const checkComplete = () => {
+                if (tiles.length === 0) return;
+                
+                const isSolved = tiles.every((tile, index) => tile === index);
+                if (isSolved && moves > 0) {
+                    isComplete = true;
+                    isRunning = false;
+                    stopTimer();
+                    toggleCompletionMessage(true);
+                }
+            };
+
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+
+            // --- Funções de Timer ---
+
+            const startTimer = () => {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    if (isRunning && !isComplete) {
+                        time++;
+                        updateStats();
+                    }
+                }, 1000);
+            };
+
+            const stopTimer = () => {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            };
+
+            // --- Funções de Renderização / DOM ---
+
+            const renderPuzzle = () => {
+                puzzleGrid.innerHTML = ''; // Limpa a grade
+                puzzleGrid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                
+                // Ajusta o tamanho máximo baseado no tamanho
+                // 3x3 -> max 300px, 4x4 -> max 400px, 5x5 -> max 500px
+                // Usamos 80px por peça para um bom tamanho em mobile
+                let tileSize = (size === 5) ? 64 : (size === 4) ? 72 : 80;
+                if (window.innerWidth < 450) {
+                     tileSize = (size === 5) ? 56 : (size === 4) ? 64 : 72;
+                }
+                puzzleGrid.style.maxWidth = `${size * (tileSize + 8)}px`; // +8 para o gap
+
+                tiles.forEach((tile, index) => {
+                    const button = document.createElement('button');
+                    const tileCanMove = canMove(index) && tile !== 0;
+
+                    let classes = `aspect-square rounded-xl text-xl md:text-2xl font-bold transition-all duration-200`;
+                    
+                    if (tile === 0) {
+                        classes += ' bg-gray-100 cursor-default';
+                    } else {
+                        classes += ' bg-gradient-to-br shadow-lg hover:scale-105 hover:shadow-xl cursor-pointer text-white';
+                        button.style.background = colors[tile % colors.length];
+                        button.textContent = tile;
+                        button.addEventListener('click', () => moveTile(index));
+                    }
+                    
+                    if (tileCanMove && !showTutorial) {
+                        classes += ' ring-4 ring-yellow-400';
+                    }
+
+                    button.className = classes;
+                    puzzleGrid.appendChild(button);
+                });
+            };
+
+            const updateStats = () => {
+                movesEl.textContent = moves;
+                timeEl.textContent = formatTime(time);
+            };
+
+            const toggleCompletionMessage = (show) => {
+                if (show) {
+                    completionTextEl.textContent = `Parabéns! Você completou em ${moves} movimentos e ${formatTime(time)}!`;
+                    completionMessageEl.classList.remove('hidden');
+                } else {
+                    completionMessageEl.classList.add('hidden');
+                }
+            };
+
+            // --- Lógica do Tutorial ---
+            
+            const startTutorial = () => {
+                showTutorial = true;
+                tutorialStep = 0;
+                toggleTutorialModal(true);
+                renderTutorialStep();
+                
+                // Configura o puzzle para o estado inicial do tutorial
+                stopTimer();
+                size = 3; // Tutorial é sempre 3x3
+                sizeSelect.value = "3";
+                tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0]; // Mostra o estado resolvido como exemplo
+                moves = 0;
+                time = 0;
+                isComplete = false;
+                isRunning = false;
+                updateStats();
+                toggleCompletionMessage(false);
+                renderPuzzle(); // Renderiza o puzzle principal no estado de exemplo
+            };
+
+            const closeTutorial = () => {
+                showTutorial = false;
+                toggleTutorialModal(false);
+                initializePuzzle(); // Reinicia o jogo
+            };
+
+            const toggleTutorialModal = (show) => {
+                if (show) {
+                    tutorialModal.classList.remove('hidden');
+                } else {
+                    tutorialModal.classList.add('hidden');
+                }
+            };
+            
+            const renderTutorialStep = () => {
+                const step = tutorialSteps[tutorialStep];
+                
+                // Atualiza conteúdo
+                tutorialContentEl.innerHTML = `
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">${step.title}</h3>
+                    <p class="text-gray-700 mb-2">${step.description}</p>
+                    <div class="bg-green-100 border-l-4 border-green-500 p-3 rounded">
+                        <p class="font-semibold text-green-800">💡 ${step.example}</p>
+                    </div>
+                `;
+                
+                // Atualiza grade de exemplo
+                tutorialGridEl.innerHTML = '';
+                step.tiles.forEach(tile => {
+                    const div = document.createElement('div');
+                    div.className = `aspect-square rounded-lg flex items-center justify-center text-xl font-bold ${
+                        tile === 0 ? 'bg-gray-200' : 'bg-gradient-to-br text-white shadow-md'
+                    }`;
+                    if (tile !== 0) {
+                        div.style.background = colors[tile % colors.length];
+                        div.textContent = tile;
+                    }
+                    tutorialGridEl.appendChild(div);
+                });
+
+                // Atualiza texto e botões
+                tutorialStepTextEl.textContent = `Passo ${tutorialStep + 1} de ${tutorialSteps.length}`;
+                tutorialPrev.disabled = (tutorialStep === 0);
+                tutorialNext.disabled = (tutorialStep === tutorialSteps.length - 1);
+            };
+
+            // --- Event Listeners Iniciais ---
+            
+            sizeSelect.addEventListener('change', (e) => {
+                size = Number(e.target.value);
+                initializePuzzle();
+            });
+
+            shuffleButton.addEventListener('click', initializePuzzle);
+            
+            tutorialButton.addEventListener('click', startTutorial);
+            tutorialClose.addEventListener('click', closeTutorial);
+            
+            tutorialPrev.addEventListener('click', () => {
+                if (tutorialStep > 0) {
+                    tutorialStep--;
+                    renderTutorialStep();
+                }
+            });
+
+            tutorialNext.addEventListener('click', () => {
+                if (tutorialStep < tutorialSteps.length - 1) {
+                    tutorialStep++;
+                    renderTutorialStep();
+                }
+            });
+            
+
+            // --- Inicialização ---
+            initializePuzzle();
+            
+            // Renderiza os ícones do Lucide
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
